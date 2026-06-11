@@ -1,366 +1,370 @@
-# Task Board
+# 任务板
 
-Use this file as the sprint source of truth. Do not rely only on chat messages.
+本文件是 3 天冲刺的任务分配基准。不要只在微信群里口头分工，所有任务都要能在仓库中追踪到交付物。
 
-Each member must own at least one traceable deliverable: code, docs, test cases, screenshots, experiment records, or PPT contribution notes.
+每个成员至少负责一个可验收交付物：代码、文档、测试问题、截图、实验记录、PPT 贡献说明或 README 更新。
 
-## A1 Project Bootstrap And Environment
+## A1 项目初始化与运行环境
 
-Owner:
-Collaborators:
+负责人：
+协作者：
 
-Input:
-- Repository skeleton
+输入：
+- 项目骨架
 - `.env.example`
 
-Output:
+输出：
 - `README.md`
 - `requirements.txt`
-- verified startup command
+- 可验证的启动命令
 
-Files:
+涉及文件：
 - `README.md`
 - `requirements.txt`
 - `.env.example`
 
-Acceptance:
-- A new member can clone the repository and run `streamlit run app.py`.
-- README explains `mock`, `hybrid`, and `real` modes.
-- README clearly says API keys must not be committed.
+验收标准：
+- 新成员 clone 仓库后能运行 `streamlit run app.py`。
+- README 说明 `mock`、`hybrid`、`real` 三种模式。
+- README 明确说明 API Key 不能提交到仓库。
 
-## A2 Streamlit Main Layout
+## A2 Streamlit 主界面
 
-Owner:
-Collaborators:
+负责人：
+协作者：
 
-Input:
-- Public functions from `src/`
+输入：
+- `src/` 下各模块公开函数
 
-Output:
-- Complete visible app pages
+输出：
+- 完整可见的应用页面
 
-Files:
+涉及文件：
 - `app.py`
 
-Acceptance:
-- App has Q&A, summary, quiz, review, retrieval visualization, and status areas.
-- The app starts in `mock` mode without external services.
-- The sidebar displays mode, page count, and chunk count.
+验收标准：
+- 页面包含智能问答、文档总结、自动出题、答题反馈、复习推荐、检索可视化和系统状态。
+- 应用在 `mock` 模式下不依赖外部服务即可启动。
+- 侧边栏能显示运行模式、页数和 chunk 数量。
 
-## A3 End-To-End Demo Flow
+## A3 端到端演示流程
 
-Owner:
-Collaborators:
+负责人：
+协作者：
 
-Input:
+输入：
 - `demo/demo_questions.md`
-- public module functions
+- 各模块公开函数
 
-Output:
-- One stable demo path
+输出：
+- 一条稳定的现场演示路径
 
-Files:
+涉及文件：
 - `app.py`
 - `demo/demo_questions.md`
 
-Acceptance:
-- Demo can show upload/build knowledge base, Q&A, citations, quiz, wrong feedback, and review recommendation.
-- Demo can run with sample text if no PDF is uploaded.
-- Demo path is documented in `demo/demo_questions.md`.
+验收标准：
+- 演示能覆盖上传/构建知识库、问答、引用、出题、故意答错和复习推荐。
+- 没有上传 PDF 时，也能使用内置中文样例文本演示。
+- 演示问题写入 `demo/demo_questions.md`。
 
-## A4 Integration Guard And Bug Fixing
+## A4 集成守护与 Bug 修复
 
-Owner:
-Collaborators:
+负责人：
+协作者：
 
-Input:
-- All group modules
+输入：
+- 所有小组模块
 
-Output:
-- Stable integration branch
+输出：
+- 稳定可运行的集成版本
 
-Files:
+涉及文件：
 - `app.py`
 - `src/config.py`
 - `tests/`
 
-Acceptance:
-- `python -m pytest` passes.
-- `python -m compileall src app.py` passes.
-- No public function signature is changed without updating `docs/api_contract.md`.
+验收标准：
+- `python -m pytest` 通过。
+- `python -m compileall src app.py` 通过。
+- 不修改公共函数签名；如必须修改，先同步更新 `docs/api_contract.md` 并通知所有成员。
 
-## B1 PDF Parsing
+## B1 PDF / 文本解析
 
-Owner:
-Collaborators:
+负责人：
+协作者：
 
-Input:
+输入：
 - `data/raw/*.pdf`
 - `data/raw/*.txt`
+- `data/raw/*.md`
 
-Output:
+输出：
 - `list[DocumentPage]`
 
-Files:
+涉及文件：
 - `src/document_loader.py`
 
-Acceptance:
-- Can parse at least one PDF when PyMuPDF is installed.
-- Can load `.txt` or `.md` fallback files.
-- Each page has `file_name`, `page`, and `text`.
+验收标准：
+- 安装 PyMuPDF 后至少能解析 1 个中文 PDF。
+- 能读取 `.txt` 或 `.md` 作为 fallback。
+- 每页结果包含 `file_name`、`page`、`text`。
 
-## B2 Chunking And Concept Extraction
+## B2 中文 Chunk 切分与知识点抽取
 
-Owner:
-Collaborators:
+负责人：
+协作者：
 
-Input:
+输入：
 - `list[DocumentPage]`
 
-Output:
+输出：
 - `list[Chunk]`
 
-Files:
+涉及文件：
 - `src/chunker.py`
 - `tests/test_chunker.py`
+- `tests/test_chinese_retrieval.py`
 
-Acceptance:
-- Every chunk includes `chunk_id`, `file_name`, `page`, `text`, `chapter`, and `concepts`.
-- `chunk_id` is stable across repeated runs.
-- Chunk size and overlap are configurable.
+验收标准：
+- 每个 chunk 包含 `chunk_id`、`file_name`、`page`、`text`、`chapter`、`concepts`。
+- `chunk_id` 多次运行保持稳定。
+- chunk_size 和 overlap 可配置。
+- 能识别中文知识点，例如“检索增强生成”“重排序”“强化学习”。
 
-## B3 Embedding And Vector Store
+## B3 中文 Embedding 与向量检索接口
 
-Owner:
-Collaborators:
+负责人：
+协作者：
 
-Input:
-- Query text
-- Chunk text
+输入：
+- 用户问题文本
+- chunk 文本
 
-Output:
-- Embedding vectors
-- vector similarity score
+输出：
+- embedding 向量
+- 向量相似度分数
 
-Files:
+涉及文件：
 - `src/embedder.py`
 - `src/vector_store.py`
 
-Acceptance:
-- Mock embedding works without model downloads.
-- Real embedding can later be added without changing `retrieve(...)`.
-- Similarity scores are numeric and visible through retrieval results.
+验收标准：
+- `mock` embedding 不需要下载模型即可运行。
+- 后续可以接入中文 embedding 模型，例如 bge、bge-m3、m3e，不改变 `retrieve(...)` 接口。
+- 检索结果中能看到数值型 dense_score。
 
-## B4 BM25 / Keyword Retrieval
+## B4 中文 BM25 / 关键词检索
 
-Owner:
-Collaborators:
+负责人：
+协作者：
 
-Input:
-- Query
+输入：
+- 用户问题
 - `list[Chunk]`
 
-Output:
-- BM25 or keyword score
+输出：
+- BM25 或关键词匹配分数
 
-Files:
+涉及文件：
 - `src/bm25_store.py`
 - `src/retriever.py`
 
-Acceptance:
-- Keyword overlap fallback works in `mock` mode.
-- Each `RetrievedChunk` includes `bm25_score`.
-- Top-K retrieval returns deterministic results for the same query.
+验收标准：
+- 安装 `jieba` 时使用中文分词。
+- 没有 `jieba` 时能退化为中文单字 + bigram fallback。
+- 每个 `RetrievedChunk` 包含 `bm25_score`。
+- 同一个 query 的 Top-K 结果稳定可复现。
 
-## B5 GraphRAG-lite Expansion
+## B5 GraphRAG-lite 图扩展
 
-Owner:
-Collaborators:
+负责人：
+协作者：
 
-Input:
-- Seed `list[RetrievedChunk]`
-- all chunks
+输入：
+- seed `list[RetrievedChunk]`
+- 全部 chunks
 
-Output:
-- expanded `list[RetrievedChunk]`
+输出：
+- 扩展后的 `list[RetrievedChunk]`
 
-Files:
+涉及文件：
 - `src/graph_store.py`
 
-Acceptance:
-- Same-page chunks can receive graph score.
-- Shared-concept chunks can receive graph score.
-- Expanded candidates still use the shared `RetrievedChunk` schema.
+验收标准：
+- 同页 chunk 可以获得 graph_score。
+- 共享中文知识点的 chunk 可以获得 graph_score。
+- 扩展后的候选结果仍然使用统一的 `RetrievedChunk` 结构。
 
-## C1 MiniRanker Scoring
+## C1 MiniRanker 重排序
 
-Owner:
-Collaborators:
+负责人：
+协作者：
 
-Input:
-- Query
+输入：
+- 用户问题
 - `list[RetrievedChunk]`
 
-Output:
+输出：
 - `list[RankedChunk]`
 
-Files:
+涉及文件：
 - `src/miniranker.py`
 
-Acceptance:
-- Each result has `ranker_score`.
-- UI can show ranking score.
-- The module works without `miniranker.pt` in `mock` mode.
+验收标准：
+- 每个结果包含 `ranker_score`。
+- UI 能展示重排序分数。
+- 没有 `miniranker.pt` 时，`mock` 模式仍然可运行。
 
-## C2 LLM Client And Mode Switch
+## C2 LLM 客户端与模式切换
 
-Owner:
-Collaborators:
+负责人：
+协作者：
 
-Input:
+输入：
 - Prompt
-- environment variables
+- 环境变量
 
-Output:
-- generated text
+输出：
+- 生成文本
 
-Files:
+涉及文件：
 - `src/llm_client.py`
 - `src/config.py`
 - `.env.example`
 
-Acceptance:
-- `mock` mode returns deterministic text.
-- `real` mode has a clear implementation location.
-- Missing API key does not crash `mock` mode.
+验收标准：
+- `mock` 模式返回稳定中文文本。
+- `real` 模式的真实 API 接入位置明确。
+- 缺少 API Key 时，`mock` 模式不能崩溃。
 
-## C3 Answer Generation And Citations
+## C3 答案生成与原文引用
 
-Owner:
-Collaborators:
+负责人：
+协作者：
 
-Input:
-- User query
+输入：
+- 用户问题
 - `list[RankedChunk]`
 
-Output:
-- answer dict with citations
+输出：
+- 包含答案和引用的 dict
 
-Files:
+涉及文件：
 - `src/generator.py`
 
-Acceptance:
-- Answer includes citation entries.
-- Each citation includes `chunk_id`, `file_name`, `page`, and score.
-- Citation data can be rendered by `app.py`.
+验收标准：
+- 答案包含 citation entries。
+- 每条引用包含 `chunk_id`、`file_name`、`page`、score。
+- 引用数据能被 `app.py` 渲染。
 
-## C4 Refusal Guard And Summary
+## C4 拒答机制与文档总结
 
-Owner:
-Collaborators:
+负责人：
+协作者：
 
-Input:
-- Query
-- ranked evidence
+输入：
+- 用户问题
+- 排序后的证据
 - chunks
 
-Output:
-- refusal decision
-- document summary
+输出：
+- 是否拒答
+- 文档总结
 
-Files:
+涉及文件：
 - `src/answer_guard.py`
 - `src/generator.py`
 
-Acceptance:
-- Low-evidence queries can be refused.
-- Summary works in `mock` mode.
-- Refusal behavior can be demonstrated with an out-of-scope question.
+验收标准：
+- 证据不足的问题可以拒答。
+- 文档总结在 `mock` 模式下可运行。
+- 能用资料外问题演示拒答，例如“这份资料是否讨论 YOLOv10？”
 
-## D1 Quiz Generation
+## D1 中文自动出题
 
-Owner:
-Collaborators:
+负责人：
+协作者：
 
-Input:
+输入：
 - `list[Chunk]`
 
-Output:
+输出：
 - `list[QuizItem]`
 
-Files:
+涉及文件：
 - `src/study_tools.py`
 
-Acceptance:
-- Generates at least 3 quiz items when enough chunks exist.
-- Every quiz item includes question, options, answer, explanation, concept, and source chunk id.
-- Quiz can be rendered in `app.py`.
+验收标准：
+- 有足够 chunk 时至少生成 3 道题。
+- 每道题包含 question、options、answer、explanation、concept、source_chunk_id。
+- 题目能在 `app.py` 中展示并提交反馈。
 
-## D2 Bandit Review Recommendation
+## D2 Bandit 复习推荐
 
-Owner:
-Collaborators:
+负责人：
+协作者：
 
-Input:
-- quiz feedback
-- concept
+输入：
+- 答题反馈
+- 知识点 concept
 
-Output:
-- recommended review concept
-- persistent state file
+输出：
+- 推荐复习知识点
+- 持久化状态文件
 
-Files:
+涉及文件：
 - `src/bandit_recommender.py`
 - `tests/test_bandit.py`
 
-Acceptance:
-- `update_feedback(concept, correct)` records attempts.
-- Wrong answers increase review priority.
-- Recommendation output includes concept, score, scores, and reason.
+验收标准：
+- `update_feedback(concept, correct)` 能记录答题次数。
+- 答错会提高该知识点的复习优先级。
+- 推荐结果包含 concept、score、scores、reason。
 
-## D3 Test Cases And Experiment Records
+## D3 测试问题与实验记录
 
-Owner:
-Collaborators:
+负责人：
+协作者：
 
-Input:
-- course materials
-- demo questions
+输入：
+- 中文课程资料
+- 演示问题
 
-Output:
-- test cases
-- experiment plan and results
+输出：
+- 测试问题集
+- 实验计划和结果
 
-Files:
+涉及文件：
 - `demo/test_cases.csv`
 - `docs/experiment_plan.md`
 
-Acceptance:
-- At least 20 questions are prepared before final presentation.
-- Questions include factual, summary, quiz-generation, and out-of-scope types.
-- Experiment metrics include Recall@5, answer accuracy, citation accuracy, refusal accuracy, and response time.
+验收标准：
+- 汇报前至少准备 20 个中文测试问题。
+- 问题类型包含事实问答、总结、自动出题和资料外问题。
+- 实验指标包含 Recall@5、答案正确率、引用准确率、拒答准确率和平均响应时间。
 
-## D4 PPT, Screenshots, And Contribution Records
+## D4 PPT、截图与成员贡献记录
 
-Owner:
-Collaborators:
+负责人：
+协作者：
 
-Input:
-- app screenshots
-- experiment records
-- member work records
+输入：
+- 应用截图
+- 实验记录
+- 成员工作记录
 
-Output:
-- PPT materials
-- contribution notes
-- demo screenshots
+输出：
+- PPT 素材
+- 成员贡献说明
+- 演示截图
 
-Files:
+涉及文件：
 - `demo/screenshots/`
 - `ppt/member_contributions.md`
 
-Acceptance:
-- Every member has a contribution entry.
-- Screenshots cover Q&A, citations, MiniRanker score, quiz, and Bandit recommendation.
-- PPT only claims features that are implemented or clearly marked as fallback.
+验收标准：
+- 每个成员都有贡献记录。
+- 截图覆盖问答、引用、MiniRanker 分数、自动出题和 Bandit 推荐。
+- PPT 只能写已经实现的功能；fallback 或 mock 功能必须明确标注。
 
