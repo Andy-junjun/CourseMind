@@ -1,27 +1,27 @@
-# Chinese Retrieval Notes
+# 中文检索说明
 
-CourseMind targets Chinese course materials. The public interfaces stay the same, but several internal modules should be implemented with Chinese retrieval behavior in mind.
+CourseMind 面向中文课程资料。公共接口保持不变，但内部实现要考虑中文分词、中文术语映射和中文 embedding。
 
-## Chunking
+## Chunk 切分
 
-Current fallback:
+当前 fallback：
 
 ```text
-fixed character window
+固定字符窗口切分
 chunk_size = 400
 overlap = 80
 ```
 
-Recommended real implementation:
+推荐真实实现：
 
 ```text
-1. split by page
-2. split by Chinese headings when detectable
-3. keep formulas, code blocks, and bullet lists together when possible
-4. keep page number and chunk_id stable
+1. 先按页切分。
+2. 能识别标题时，优先按中文标题和章节切分。
+3. 尽量保持公式、代码块和项目符号列表完整。
+4. 保持 page 和 chunk_id 稳定，避免索引和引用失效。
 ```
 
-Do not remove these fields:
+不要删除这些字段：
 
 ```text
 chunk_id
@@ -32,52 +32,53 @@ chapter
 concepts
 ```
 
-## Keyword Retrieval
+## 关键词检索
 
-Current fallback in `src/bm25_store.py`:
+当前 `src/bm25_store.py` fallback：
 
 ```text
-jieba tokenization when installed
-Chinese character + bigram fallback when jieba is unavailable
+安装 jieba 时：使用 jieba 中文分词。
+没有 jieba 时：使用中文单字 + bigram fallback。
 ```
 
-Recommended real implementation:
+推荐真实实现：
 
 ```text
 rank-bm25 + jieba
-domain glossary boosting
-synonym mapping for course terms
+课程术语词表加权
+同义词映射
 ```
 
-Examples:
+术语映射示例：
 
 ```text
 大语言模型 -> LLM
 检索增强生成 -> RAG
 重排序 -> rerank / MiniRanker
 多臂老虎机 -> Bandit
+知识图谱扩展 -> GraphRAG-lite
 ```
 
 ## Embedding
 
-Recommended Chinese-capable embedding models:
+推荐可选中文向量模型：
 
 ```text
 bge-small-zh / bge-base-zh
 bge-m3
 m3e
-text-embedding API with Chinese support
+支持中文的 text-embedding API
 ```
 
-Keep the public retrieval interface:
+保持公共检索接口不变：
 
 ```python
 retrieve(query: str, chunks: list[Chunk], top_k: int = 5) -> list[RetrievedChunk]
 ```
 
-## Reranking
+## 重排序
 
-MiniRanker can stay as the lightweight feature model:
+MiniRanker 可以保持轻量特征模型：
 
 ```text
 dense_score
@@ -88,5 +89,5 @@ same_chapter_bonus
 chunk_length_norm
 ```
 
-If a Chinese cross-encoder is added later, keep it behind the rerank interface and do not break `RankedChunk`.
+如果后续加入中文 Cross-Encoder，也应封装在 `rerank(...)` 接口后面，不要破坏 `RankedChunk` 数据结构。
 

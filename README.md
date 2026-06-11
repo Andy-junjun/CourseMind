@@ -20,7 +20,7 @@ MiniRanker 重排序接口
 Bandit 复习推荐
 ```
 
-## Quick Start
+## 快速开始
 
 ```bash
 python -m venv .venv
@@ -35,7 +35,7 @@ streamlit run app.py
 python -m streamlit run app.py --server.port 8501 --server.address 127.0.0.1
 ```
 
-## Modes
+## 运行模式
 
 ```text
 mock   : 默认模式，使用确定性的 fallback，适合集成和演示
@@ -54,24 +54,24 @@ set COURSEMIND_MODE=mock
 中文检索和英文检索的主要差异在于分词。当前骨架已做两层处理：
 
 ```text
-1. 安装 jieba 时，使用 jieba 做中文分词
-2. 没有 jieba 时，退化为中文单字 + bigram fallback
+1. 安装 jieba 时，使用 jieba 做中文分词。
+2. 没有 jieba 时，退化为中文单字 + bigram fallback。
 ```
 
 后续 B 组可以在 `src/bm25_store.py` 内替换为更正式的 BM25；也可以在 `src/embedder.py` 和 `src/vector_store.py` 内接入中文 embedding 模型，例如 bge、m3e 或其他课程允许使用的中文向量模型。不要改公共函数签名。
 
-## Team Boundaries
+## 小组边界
 
 ```text
-A group: 集成、Streamlit UI、README、可运行 demo
-B group: PDF 解析、中文 Chunk、embedding、FAISS/BM25、GraphRAG-lite、retrieval
-C group: LLM client、generator、MiniRanker、answer guard
-D group: Bandit 推荐、答题反馈、测试问题、PPT、演示素材
+A 组：集成、Streamlit UI、README、可运行 demo
+B 组：PDF 解析、中文 Chunk、embedding、FAISS/BM25、GraphRAG-lite、retrieval
+C 组：LLM client、generator、MiniRanker、answer guard
+D 组：Bandit 推荐、答题反馈、测试问题、PPT、演示素材
 ```
 
 所有模块必须遵守 `src/schemas.py` 和 `docs/api_contract.md`。不要私自重命名共享字段或修改公共函数签名。
 
-## Required Deliverables
+## 必须提交的交付物
 
 每个成员至少提交一个仓库内可追踪交付物：代码、文档、测试问题、截图、实验结果、PPT 贡献记录或 README 更新。
 

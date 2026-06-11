@@ -1,6 +1,6 @@
-# API Contract
+# API 契约
 
-These signatures are frozen for the first sprint.
+以下函数签名是第一轮冲刺的强约束。组员可以替换函数内部实现，但不要私自修改参数和返回值。
 
 ```python
 load_pdf(file_path: str) -> list[DocumentPage]
@@ -14,5 +14,5 @@ update_feedback(concept: str, correct: bool) -> None
 recommend_concept() -> dict
 ```
 
-Shared schemas live in `src/schemas.py`.
+共享数据结构定义在 `src/schemas.py`。如果必须修改契约，先同步所有成员，再同时更新代码、测试和文档。
 

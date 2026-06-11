@@ -1,16 +1,16 @@
-# Member Contributions
+# 成员贡献记录
 
-Use this template for every member.
+每个成员按以下模板填写。最终 PPT 和答辩中的成员贡献说明以本文件为准。
 
 ```text
-Name:
-Role:
-Responsible module:
-Completed work:
-Submitted files:
-AI assistance used:
-Personal modifications and debugging:
-Problems encountered:
-Solutions:
+姓名：
+角色：
+负责模块：
+具体完成内容：
+提交文件：
+是否使用 AI 辅助：
+自己完成的修改和调试：
+遇到的问题：
+解决方法：
 ```
 

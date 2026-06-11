@@ -1,6 +1,6 @@
 id,type,question,expected_behavior
-1,fact,What technologies does CourseMind use?,Answer with citations from retrieved chunks
-2,summary,Summarize this document,Return a concise document summary
-3,quiz,Generate three quiz questions,Return QuizItem-compatible questions
-4,out_of_scope,Does this document discuss YOLOv10?,Refuse if evidence is insufficient
+1,事实问答,CourseMind 使用了哪些检索和学习推荐技术？,基于检索片段回答并给出引用
+2,总结,请总结这份中文课程资料的主要内容。,返回简洁的文档总结
+3,自动出题,请根据上传资料生成三道选择题。,返回符合 QuizItem 结构的题目
+4,资料外问题,这份资料是否讨论了 YOLOv10 的网络结构？,证据不足时拒答
 

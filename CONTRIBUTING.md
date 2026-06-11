@@ -1,21 +1,21 @@
-# Contributing
+# 贡献规范
 
-## Hard Rules
+## 硬性规则
 
-1. `src/schemas.py` is the shared contract. Do not rename fields casually.
-2. Public function signatures in `docs/api_contract.md` are frozen for the first sprint.
-3. Keep `mock` mode runnable after every change.
-4. Put non-code work into the repository so it can be checked and cited.
-5. Do not commit API keys, private PDFs, model weights, or generated indexes.
+1. `src/schemas.py` 是全项目共享数据契约，不能随意重命名字段。
+2. `docs/api_contract.md` 中的公共函数签名在第一轮冲刺中冻结。
+3. 每次修改后都要保证 `mock` 模式仍然可以运行。
+4. 非代码工作也必须放进仓库，方便检查、验收和在汇报中引用。
+5. 不要提交 API Key、私人 PDF、模型权重或生成的索引文件。
 
-## Group Ownership
+## 小组边界
 
 ```text
-A group owns app.py, integration, environment docs, and demo stability.
-B group owns document loading, chunking, retrieval, BM25, vectors, and graph expansion.
-C group owns LLM calls, generation, answer guard, MiniRanker, and optional model training.
-D group owns quiz feedback, Bandit recommendation, test cases, experiment records, and PPT materials.
+A 组：负责 app.py、系统集成、环境说明和演示稳定性。
+B 组：负责文档解析、中文 Chunk、检索、BM25、向量接口和 GraphRAG-lite 图扩展。
+C 组：负责 LLM 调用、答案生成、拒答机制、MiniRanker 和可选模型训练。
+D 组：负责自动出题、答题反馈、Bandit 推荐、测试问题、实验记录和 PPT 素材。
 ```
 
-Code can cross group boundaries only through the public interfaces.
+跨组协作只能通过公开接口完成。不要为了临时跑通而私自修改别人的数据结构或函数签名。
 
