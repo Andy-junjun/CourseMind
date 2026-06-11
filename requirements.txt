@@ -1,9 +1,9 @@
 streamlit>=1.32
 pytest>=8.0
 jieba>=0.42
+pymupdf>=1.24
 
 # Optional real-mode dependencies. Install only when the corresponding module is used.
-# pymupdf>=1.24
 # sentence-transformers>=3.0
 # faiss-cpu>=1.8
 # rank-bm25>=0.2

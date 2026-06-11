@@ -3,27 +3,81 @@ from pathlib import Path
 from src.schemas import DocumentPage
 
 
+SUPPORTED_TEXT_SUFFIXES = {".txt", ".md", ".markdown"}
+TEXT_ENCODINGS = ("utf-8-sig", "utf-8", "gb18030")
+
+
 def load_pdf(file_path: str) -> list[DocumentPage]:
+    """Load PDF or text-like course material into page records.
+
+    The public name stays `load_pdf` because it is part of the first-sprint API
+    contract, but the implementation also supports plain text and Markdown.
+    """
     path = Path(file_path)
     if not path.exists():
         raise FileNotFoundError(file_path)
-    if path.suffix.lower() == ".pdf":
-        try:
-            import fitz  # type: ignore
 
-            doc = fitz.open(str(path))
-            return [
-                DocumentPage(file_name=path.name, page=i + 1, text=page.get_text().strip())
-                for i, page in enumerate(doc)
-            ]
-        except ImportError:
-            return [
+    suffix = path.suffix.lower()
+    if suffix == ".pdf":
+        return _load_pdf_pages(path)
+
+    if suffix in SUPPORTED_TEXT_SUFFIXES:
+        return _load_text_pages(path)
+
+    raise ValueError(
+        f"Unsupported document type: {suffix or '<no extension>'}. "
+        "Supported types: .pdf, .txt, .md, .markdown"
+    )
+
+
+def _load_pdf_pages(path: Path) -> list[DocumentPage]:
+    try:
+        import fitz  # type: ignore
+    except ImportError as exc:
+        raise RuntimeError(
+            "PDF parsing requires PyMuPDF. Install it with `pip install pymupdf`."
+        ) from exc
+
+    try:
+        with fitz.open(str(path)) as doc:
+            pages = [
                 DocumentPage(
                     file_name=path.name,
-                    page=1,
-                    text="PDF parsing requires pymupdf in real mode. This fallback keeps the app runnable.",
+                    page=index + 1,
+                    text=page.get_text("text").strip(),
                 )
+                for index, page in enumerate(doc)
             ]
-    text = path.read_text(encoding="utf-8", errors="ignore")
-    return [DocumentPage(file_name=path.name, page=1, text=text)]
+    except Exception as exc:
+        raise RuntimeError(f"Failed to parse PDF file: {path}") from exc
 
+    if not pages:
+        raise ValueError(f"PDF contains no pages: {path}")
+    return pages
+
+
+def _load_text_pages(path: Path) -> list[DocumentPage]:
+    text = _read_text_with_fallback(path)
+    parts = text.split("\f")
+    pages = [
+        DocumentPage(file_name=path.name, page=index + 1, text=part.strip())
+        for index, part in enumerate(parts)
+    ]
+    return pages or [DocumentPage(file_name=path.name, page=1, text="")]
+
+
+def _read_text_with_fallback(path: Path) -> str:
+    last_error: UnicodeDecodeError | None = None
+    for encoding in TEXT_ENCODINGS:
+        try:
+            return path.read_text(encoding=encoding)
+        except UnicodeDecodeError as exc:
+            last_error = exc
+
+    raise UnicodeDecodeError(
+        last_error.encoding if last_error else "unknown",
+        last_error.object if last_error else b"",
+        last_error.start if last_error else 0,
+        last_error.end if last_error else 0,
+        f"Could not decode text file with encodings: {', '.join(TEXT_ENCODINGS)}",
+    )
