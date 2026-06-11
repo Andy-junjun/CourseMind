@@ -3,21 +3,34 @@ from src.schemas import Chunk, DocumentPage
 
 CONCEPT_KEYWORDS = [
     "Transformer",
+    "注意力机制",
+    "文本嵌入",
     "RAG",
+    "检索增强生成",
+    "向量检索",
     "FAISS",
     "BM25",
     "GraphRAG",
+    "知识图谱",
+    "图扩展",
     "MiniRanker",
+    "重排序",
     "Bandit",
+    "多臂老虎机",
+    "强化学习",
     "Embedding",
     "LLM",
+    "大语言模型",
+    "自动出题",
+    "原文引用",
+    "拒答机制",
 ]
 
 
 def infer_concepts(text: str) -> list[str]:
     lower = text.lower()
     concepts = [keyword for keyword in CONCEPT_KEYWORDS if keyword.lower() in lower]
-    return concepts or ["General"]
+    return concepts or ["通用知识点"]
 
 
 def chunk_pages(
@@ -58,4 +71,3 @@ def chunk_pages(
 
 def safe_id(file_name: str) -> str:
     return "".join(ch.lower() if ch.isalnum() else "_" for ch in file_name).strip("_")
-

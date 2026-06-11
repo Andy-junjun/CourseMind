@@ -1,5 +1,6 @@
 streamlit>=1.32
 pytest>=8.0
+jieba>=0.42
 
 # Optional real-mode dependencies. Install only when the corresponding module is used.
 # pymupdf>=1.24
@@ -8,4 +9,3 @@ pytest>=8.0
 # rank-bm25>=0.2
 # networkx>=3.0
 # torch>=2.0
-

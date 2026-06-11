@@ -1,8 +1,7 @@
 # Demo Questions
 
-1. What technologies does CourseMind use?
-2. How does MiniRanker improve retrieval results?
-3. Why does the system need citations?
-4. Generate three quiz questions from the uploaded course material.
-5. Does this document discuss YOLOv10 network structure?
-
+1. CourseMind 使用了哪些检索和学习推荐技术？
+2. MiniRanker 如何提升中文课程资料的检索结果质量？
+3. 为什么系统需要展示原文引用？
+4. 请根据上传的课程资料生成 3 道选择题。
+5. 这份资料是否讨论了 YOLOv10 的网络结构？

@@ -19,10 +19,9 @@ def answer_question(query: str, evidence: list[RankedChunk]) -> dict:
 
 def summarize_document(chunks: list[Chunk]) -> str:
     if not chunks:
-        return "No document content is available."
+        return "当前没有可总结的文档内容。"
     concepts = sorted({concept for chunk in chunks for concept in chunk.concepts})
     return (
-        f"This document has {len(chunks)} chunks. Main detected concepts: "
-        f"{', '.join(concepts)}. The summary module can be replaced by a real LLM call later."
+        f"当前文档共切分为 {len(chunks)} 个片段。检测到的主要知识点包括："
+        f"{'、'.join(concepts)}。后续可以在 real 模式下将该总结模块替换为真实 LLM 调用。"
     )
-

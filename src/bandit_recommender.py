@@ -5,7 +5,7 @@ from pathlib import Path
 from src.config import get_bandit_state_path
 
 
-DEFAULT_CONCEPTS = ["Transformer", "RAG", "MiniRanker", "GraphRAG", "Bandit", "LLM"]
+DEFAULT_CONCEPTS = ["Transformer", "RAG", "MiniRanker", "GraphRAG", "Bandit", "大语言模型"]
 
 
 def load_state(path: Path | None = None) -> dict:
@@ -46,9 +46,8 @@ def recommend_concept() -> dict:
             best_concept = concept
             best_score = score
     return {
-        "concept": best_concept or "General",
+        "concept": best_concept or "通用知识点",
         "score": best_score,
         "scores": scores,
-        "reason": "Higher score means either more mistakes or less practice history.",
+        "reason": "分数越高，表示该知识点错题更多，或练习次数较少，需要优先复习。",
     }
-
