@@ -1,0 +1,2 @@
+"""CourseMind core package."""
+

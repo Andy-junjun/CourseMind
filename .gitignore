@@ -1,0 +1,17 @@
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.streamlit/secrets.toml
+data/raw/*
+data/processed/*
+data/indexes/*
+data/training/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/indexes/.gitkeep
+!data/training/.gitkeep
+*.pt
+*.pkl
+*.index
+streamlit*.log

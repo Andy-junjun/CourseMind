@@ -1,0 +1,6 @@
+id,type,question,expected_behavior
+1,fact,What technologies does CourseMind use?,Answer with citations from retrieved chunks
+2,summary,Summarize this document,Return a concise document summary
+3,quiz,Generate three quiz questions,Return QuizItem-compatible questions
+4,out_of_scope,Does this document discuss YOLOv10?,Refuse if evidence is insufficient
+
