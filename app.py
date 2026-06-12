@@ -11,6 +11,7 @@ from src.generator import answer_question, summarize_document
 from src.graph_store import expand_with_graph
 from src.miniranker import rerank
 from src.retriever import retrieve
+from src.schemas import DocumentPage
 from src.study_tools import generate_quiz
 
 
@@ -20,19 +21,22 @@ RAW_DIR = Path("data/raw")
 RAW_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def default_pages():
-    sample = RAW_DIR / "sample_course_zh.txt"
-    if not sample.exists():
-        sample.write_text(
-            "CourseMind 是一个面向中文课程资料的智能学习助手。系统支持 PDF 解析、"
-            "中文 Chunk 切分、RAG 检索、原文引用、文档总结、自动出题和复习推荐。"
-            "检索阶段结合向量检索、BM25 关键词检索和 GraphRAG-lite 图扩展。"
-            "MiniRanker 会综合 dense_score、bm25_score、graph_score、同页奖励、"
-            "同章节奖励和文本长度特征，对候选片段重新排序。Bandit 模块根据学生"
-            "答题反馈推荐薄弱知识点。",
-            encoding="utf-8",
+def default_pages() -> list[DocumentPage]:
+    return [
+        DocumentPage(
+            file_name="内置中文课程示例",
+            page=1,
+            text=(
+                "CourseMind 是一个面向中文课程资料的智能学习助手。"
+                "系统支持 PDF 解析、中文 Chunk 切分、RAG 检索、原文引用、"
+                "文档总结、自动出题和复习推荐。检索阶段结合向量检索、"
+                "BM25 关键词检索和 GraphRAG-lite 图扩展。MiniRanker 会综合 "
+                "dense_score、bm25_score、graph_score、同页奖励、同章节奖励和"
+                "文本长度特征，对候选片段重新排序。Bandit 模块根据学生答题反馈"
+                "推荐薄弱知识点。"
+            ),
         )
-    return load_pdf(str(sample))
+    ]
 
 
 @st.cache_data(show_spinner=False)
@@ -129,4 +133,3 @@ with tab_status:
             "fallback_ready": True,
         }
     )
-
