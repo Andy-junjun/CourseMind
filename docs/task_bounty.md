@@ -14,15 +14,47 @@
 5. GraphRAG 可以优化，但要先定义图节点和边，不要只写“知识图谱”四个字。
 6. 中文出题和 Bandit 推荐很适合分给组员，因为容易做出可见 demo 和可验收测试。
 
+## 数据范围修正
+
+知识库主内容应围绕深度学习课程，而不是围绕 CourseMind 的系统实现技术。
+
+主数据范围：
+
+```text
+神经网络基础
+反向传播
+损失函数
+优化器
+CNN
+RNN / LSTM / GRU
+Transformer / 注意力机制
+深度强化学习 / DRL
+模型训练与调参
+实验结果分析
+```
+
+不要把这些作为知识库主数据主题：
+
+```text
+RAG
+FAISS
+GraphRAG
+MiniRanker
+Bandit 推荐
+OCR
+Streamlit
+```
+
+这些属于系统实现技术，只放在架构文档、实验报告和 PPT 技术路线里。
+
 ## 数据格式建议
 
 建议收集这些数据：
 
 ```text
-data/raw/course_notes/*.pdf          中文课程讲义，优先文本型 PDF
-data/raw/slides/*.pdf                PPT 导出的 PDF
-data/raw/articles/*.md               课程相关中文文章或整理笔记
-data/raw/examples/*.txt              小段概念解释、问答材料
+data/raw/course_notes/*.pdf          深度学习课程讲义，优先文本型 PDF
+data/raw/slides/*.pdf                深度学习课程 PPT 导出的 PDF
+data/raw/notes/*.md                  神经网络/CNN/RNN/Transformer/DRL 笔记
 data/raw/images/*.png|*.jpg          截图或扫描页，只有 OCR 任务完成后再纳入主流程
 data/eval/retrieval_queries.csv      检索评测问题
 data/eval/qa_gold.jsonl              问答标准答案和依据 chunk
@@ -33,13 +65,14 @@ data/eval/quiz_gold.jsonl            出题评测样本
 
 ```csv
 query,expected_file,expected_page,expected_concept,expected_keywords,query_type
-项目评分标准是什么？,深度学习课堂汇报说明.pdf,1,评分标准,"技术深度;演示效果;团队分工",fact
+LSTM 如何缓解长期依赖问题？,LSTM课程笔记.md,1,LSTM,"遗忘门;输入门;记忆单元",fact
+Transformer 为什么需要位置编码？,Transformer课程笔记.md,1,Transformer,"位置信息;序列顺序;注意力机制",fact
 ```
 
 `qa_gold.jsonl` 建议每行：
 
 ```json
-{"query":"项目评分标准是什么？","answer_keywords":["技术深度","演示效果","团队分工"],"evidence_pages":[1],"must_refuse":false}
+{"query":"LSTM 如何缓解长期依赖问题？","answer_keywords":["遗忘门","输入门","记忆单元"],"evidence_pages":[1],"must_refuse":false}
 ```
 
 ## 任务
