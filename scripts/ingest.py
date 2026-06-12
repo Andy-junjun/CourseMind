@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -25,9 +26,12 @@ def collect_documents(raw_dir: Path) -> list[Path]:
     if not raw_dir.exists():
         raise FileNotFoundError(raw_dir)
     return sorted(
-        path
-        for path in raw_dir.iterdir()
-        if path.is_file() and path.suffix.lower() in SUPPORTED_SUFFIXES
+        (
+            path
+            for path in raw_dir.rglob("*")
+            if path.is_file() and path.suffix.lower() in SUPPORTED_SUFFIXES
+        ),
+        key=lambda path: path.relative_to(raw_dir).as_posix(),
     )
 
 
@@ -44,7 +48,10 @@ def build_vector_database(
 
     pages: list[DocumentPage] = []
     for document in documents:
-        pages.extend(load_pdf(str(document)))
+        relative_name = document.relative_to(raw_dir).as_posix()
+        pages.extend(
+            replace(page, file_name=relative_name) for page in load_pdf(str(document))
+        )
 
     chunks = chunk_pages(pages, chunk_size=chunk_size, overlap=overlap)
     persist_vector_store(
@@ -53,7 +60,7 @@ def build_vector_database(
         index_path=index_path,
         metadata={
             "raw_dir": str(raw_dir),
-            "source_files": [path.name for path in documents],
+            "source_files": [path.relative_to(raw_dir).as_posix() for path in documents],
             "page_count": len(pages),
             "chunk_count": len(chunks),
             "chunk_size": chunk_size,
