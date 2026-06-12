@@ -32,8 +32,17 @@ def generate_mock_text(prompt: str) -> str:
         return "模拟总结：该资料围绕课程项目要求、技术路线、评分标准和成员贡献展开。"
     if "quiz" in normalized or "出题" in prompt or "选择题" in prompt:
         return "模拟出题：请根据检索证据设计题目，并保留来源 chunk_id。"
-    if "拒答" in prompt or "证据不足" in prompt:
-        return "当前知识库未检索到足够相关的课程资料，无法可靠回答该问题。"
+    if "评分标准" in prompt:
+        return (
+            "模拟回答：根据已检索到的课程资料，项目评分标准包含技术深度与正确性、"
+            "演示效果与可交互性、创新性与工作量、PPT 结构与讲解表达、"
+            "团队分工明确性和提交材料完整性等方面。具体分值请以引用来源中的评分表为准。"
+        )
+    if "项目要求" in prompt:
+        return (
+            "模拟回答：课程项目要求学生运用神经网络、强化学习等课堂所学技术，"
+            "解决一个具体问题或完成一个有创意的任务，并完成可演示系统。"
+        )
     return (
         "模拟回答：根据已检索到的课程证据，系统会优先基于原文片段回答，并给出引用来源。"
         "当前为 mock 模式，后续可在 real 模式下接入真实大语言模型 API。"
@@ -91,4 +100,3 @@ def call_openai_compatible_chat(
         return str(payload["choices"][0]["message"]["content"]).strip()
     except (KeyError, IndexError, TypeError) as exc:
         raise RuntimeError("Unexpected LLM API response format.") from exc
-

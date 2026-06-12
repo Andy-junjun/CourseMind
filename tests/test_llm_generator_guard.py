@@ -38,6 +38,15 @@ def test_mock_llm_returns_stable_chinese_text(monkeypatch):
     assert "模拟总结" in first
 
 
+def test_mock_llm_does_not_refuse_just_because_prompt_mentions_insufficient_evidence(monkeypatch):
+    monkeypatch.setenv("COURSEMIND_MODE", "mock")
+
+    answer = generate_text("如果证据不足请拒答。问题：项目评分标准是什么？证据：五、评分标准")
+
+    assert "模拟回答" in answer
+    assert "当前知识库未检索到足够相关" not in answer
+
+
 def test_real_llm_without_api_key_raises(monkeypatch):
     monkeypatch.setenv("COURSEMIND_MODE", "real")
     monkeypatch.setenv("LLM_PROVIDER", "openai_compatible")
@@ -69,7 +78,7 @@ def test_answer_question_returns_answer_and_citations(monkeypatch):
 
     result = answer_question("评分标准是什么？", evidence)
 
-    assert "answer" in result
+    assert "模拟回答" in result["answer"]
     assert "citations" in result
     assert result["evidence_count"] == 1
     citation = result["citations"][0]
@@ -124,4 +133,3 @@ def test_answer_guard_refuses_empty_or_low_evidence():
 
 def test_answer_guard_accepts_strong_evidence():
     assert should_refuse("评分标准是什么？", [make_ranked(ranker_score=0.7, bm25_score=0.3)]) is False
-

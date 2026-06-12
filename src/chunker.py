@@ -10,13 +10,13 @@ CONCEPT_ALIASES: dict[str, list[str]] = {
     "Transformer": ["Transformer", "注意力机制", "self-attention", "attention"],
     "文本嵌入": ["文本嵌入", "Embedding", "embedding", "向量表示"],
     "RAG": ["RAG", "检索增强生成", "Retrieval Augmented Generation"],
-    "向量检索": ["向量检索", "语义检索", "dense retrieval", "FAISS"],
+    "向量检索": ["向量检索", "语义检索", "dense retrieval", "FAISS", "向量数据库"],
     "BM25": ["BM25", "关键词检索", "稀疏检索"],
     "GraphRAG": ["GraphRAG", "GraphRAG-lite", "知识图谱", "图扩展", "图检索"],
     "MiniRanker": ["MiniRanker", "重排序", "rerank", "reranker", "神经重排序"],
     "Bandit": ["Bandit", "多臂老虎机", "UCB", "epsilon-greedy", "ε-greedy"],
     "强化学习": ["强化学习", "reinforcement learning", "RL", "DRL"],
-    "大语言模型": ["大语言模型", "LLM", "语言模型", "Ollama"],
+    "大语言模型": ["大语言模型", "LLM", "语言模型", "Ollama", "OpenAI"],
     "自动出题": ["自动出题", "生成题目", "选择题", "Quiz"],
     "原文引用": ["原文引用", "引用来源", "citation", "citations"],
     "拒答机制": ["拒答机制", "拒答", "资料外问题", "证据不足"],
@@ -25,7 +25,7 @@ CONCEPT_ALIASES: dict[str, list[str]] = {
 }
 
 HEADING_PATTERNS = [
-    re.compile(r"^第[一二三四五六七八九十百千万0-9]+[章节部分篇][：:、.\s]?.*"),
+    re.compile(r"^第[一二三四五六七八九十百千万0-9]+[章节部分篇][：:、\s]?.*"),
     re.compile(r"^[一二三四五六七八九十]+[、.．]\s*\S+.*"),
     re.compile(r"^\d+(?:\.\d+)*[、.．\s]\s*\S+.*"),
     re.compile(r"^#{1,6}\s+\S+.*"),
@@ -96,7 +96,10 @@ def split_page_into_sections(text: str) -> list[tuple[str | None, str]]:
     if current_lines:
         sections.append((current_chapter, current_lines))
 
-    return [(chapter, normalize_spaces(" ".join(section_lines))) for chapter, section_lines in sections]
+    return [
+        (chapter, normalize_spaces(" ".join(section_lines)))
+        for chapter, section_lines in sections
+    ]
 
 
 def split_text_into_chunks(text: str, chunk_size: int, overlap: int) -> list[str]:
@@ -175,4 +178,3 @@ def _overlap_prefix(previous: str, overlap: int, sentence: str) -> str:
         return sentence
     prefix = previous[-overlap:].strip()
     return f"{prefix} {sentence}".strip() if prefix else sentence
-

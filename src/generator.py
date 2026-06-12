@@ -27,10 +27,10 @@ def summarize_document(chunks: list[Chunk]) -> str:
     if not chunks:
         return "当前没有可总结的文档内容。"
 
-    concepts = sorted({concept for chunk in chunks for concept in chunk.concepts})
+    concept_counts = Counter(concept for chunk in chunks for concept in chunk.concepts)
     files = sorted({chunk.file_name for chunk in chunks})
     pages = sorted({chunk.page for chunk in chunks})
-    top_concepts = [concept for concept, _ in Counter(concepts).most_common(8)]
+    top_concepts = [concept for concept, _ in concept_counts.most_common(8)]
 
     prompt = (
         "请总结当前中文课程资料，突出项目要求、技术点、评分标准和成员贡献要求。\n"
@@ -74,4 +74,3 @@ def build_citations(evidence: list[RankedChunk]) -> list[dict]:
         }
         for item in evidence
     ]
-

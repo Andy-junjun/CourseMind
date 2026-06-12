@@ -20,6 +20,10 @@ def should_refuse(
     if not evidence:
         return True
 
+    query_lower = query.lower()
+    if any(hint in query_lower for hint in OUT_OF_SCOPE_HINTS):
+        return True
+
     best = max(evidence, key=lambda item: item.ranker_score)
     if best.ranker_score >= threshold:
         return False
@@ -27,13 +31,8 @@ def should_refuse(
     if best.bm25_score >= min_keyword_score and best.ranker_score >= threshold - 0.08:
         return False
 
-    query_lower = query.lower()
-    if any(hint in query_lower for hint in OUT_OF_SCOPE_HINTS):
-        return True
-
-    return best.ranker_score < threshold
+    return True
 
 
 def refusal_message() -> str:
-    return "当前知识库未检索到足够相关的课程资料，无法基于已上传内容可靠回答。"
-
+    return "当前知识库未检索到足够相关的课程资料，无法可靠回答该问题。"

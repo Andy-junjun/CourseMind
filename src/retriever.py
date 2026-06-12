@@ -1,13 +1,18 @@
 from src.bm25_store import keyword_score
 from src.schemas import Chunk, RetrievedChunk
-from src.vector_store import search_index
+from src.vector_store import VectorIndex, search_index
 
 
-def retrieve(query: str, chunks: list[Chunk], top_k: int = 5) -> list[RetrievedChunk]:
+def retrieve(
+    query: str,
+    chunks: list[Chunk],
+    top_k: int = 5,
+    index: VectorIndex | None = None,
+) -> list[RetrievedChunk]:
     if top_k <= 0:
         return []
 
-    dense_results = search_index(query, chunks, top_k=max(top_k, len(chunks)))
+    dense_results = search_index(query, chunks, top_k=max(top_k, len(chunks)), index=index)
     candidates = []
     for chunk, dense_score in dense_results:
         bm25_score = keyword_score(query, chunk)
@@ -29,4 +34,3 @@ def retrieve(query: str, chunks: list[Chunk], top_k: int = 5) -> list[RetrievedC
 
 def hybrid_score(dense_score: float, bm25_score: float) -> float:
     return 0.6 * dense_score + 0.4 * bm25_score
-

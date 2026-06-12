@@ -20,7 +20,13 @@ def test_chunker_outputs_stable_required_fields():
 
 
 def test_chunker_keeps_chunk_id_stable_across_runs():
-    pages = [DocumentPage(file_name="深度学习课堂汇报说明.pdf", page=2, text="五、评分标准\n技术深度与正确性。")]
+    pages = [
+        DocumentPage(
+            file_name="深度学习课堂汇报说明.pdf",
+            page=2,
+            text="五、评分标准\n技术深度与正确性。",
+        )
+    ]
 
     first_run = chunk_pages(pages, chunk_size=40, overlap=5)
     second_run = chunk_pages(pages, chunk_size=40, overlap=5)
@@ -34,7 +40,12 @@ def test_chunker_extracts_chinese_chapter_heading():
         DocumentPage(
             file_name="course.md",
             page=1,
-            text="一、项目目标\n本课程要求基于深度学习或强化学习实现可演示系统。\n二、评分标准\n满分100分。",
+            text=(
+                "一、项目目标\n"
+                "本课程要求基于深度学习或强化学习实现可演示系统。\n"
+                "二、评分标准\n"
+                "满分100分。"
+            ),
         )
     ]
 
@@ -74,4 +85,3 @@ def test_infer_concepts_supports_aliases_and_defaults():
     assert "MiniRanker" in concepts
     assert "Bandit" in concepts
     assert infer_concepts("普通课程内容") == ["通用知识点"]
-

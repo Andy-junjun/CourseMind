@@ -13,6 +13,7 @@ from src.miniranker import rerank
 from src.retriever import retrieve
 from src.schemas import DocumentPage
 from src.study_tools import generate_quiz
+from src.vector_store import build_index, load_vector_store, vector_store_exists
 
 
 st.set_page_config(page_title="CourseMind", layout="wide")
@@ -39,11 +40,33 @@ def default_pages() -> list[DocumentPage]:
     ]
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_resource(show_spinner=False)
 def build_knowledge_base(file_path: str | None):
-    pages = load_pdf(file_path) if file_path else default_pages()
+    if file_path:
+        pages = load_pdf(file_path)
+        chunks = chunk_pages(pages)
+        index = build_index(chunks)
+        return pages, chunks, index, "上传文件临时索引"
+
+    if vector_store_exists():
+        chunks, index = load_vector_store()
+        pages = pages_from_chunks(chunks)
+        return pages, chunks, index, "data/indexes/faiss.index"
+
+    pages = default_pages()
     chunks = chunk_pages(pages)
-    return pages, chunks
+    index = build_index(chunks)
+    return pages, chunks, index, "内置示例"
+
+
+def pages_from_chunks(chunks):
+    page_text: dict[tuple[str, int], list[str]] = {}
+    for chunk in chunks:
+        page_text.setdefault((chunk.file_name, chunk.page), []).append(chunk.text)
+    return [
+        DocumentPage(file_name=file_name, page=page, text="\n".join(parts))
+        for (file_name, page), parts in sorted(page_text.items())
+    ]
 
 
 st.sidebar.title("CourseMind")
@@ -56,19 +79,20 @@ if uploaded:
     target.write_bytes(uploaded.getbuffer())
     file_path = str(target)
 
-pages, chunks = build_knowledge_base(file_path)
+pages, chunks, vector_index, data_source = build_knowledge_base(file_path)
 st.sidebar.metric("页数", len(pages))
 st.sidebar.metric("Chunks", len(chunks))
+st.sidebar.caption(f"数据来源：{data_source}")
 
 tab_qa, tab_summary, tab_quiz, tab_review, tab_status = st.tabs(
     ["问答", "总结", "出题", "复习", "状态"]
 )
 
 with tab_qa:
-    query = st.text_input("问题", "CourseMind 使用了哪些检索和学习推荐技术？")
+    query = st.text_input("问题", "项目评分标准是什么？")
     top_k = st.slider("Top-K 证据", 1, 10, 5)
     if st.button("提问", type="primary"):
-        retrieved = retrieve(query, chunks, top_k=top_k)
+        retrieved = retrieve(query, chunks, top_k=top_k, index=vector_index)
         expanded = expand_with_graph(retrieved, chunks, hops=1)
         ranked = rerank(query, expanded, top_k=top_k)
         if should_refuse(query, ranked):
@@ -130,6 +154,7 @@ with tab_status:
             "mode": get_mode(),
             "pages": len(pages),
             "chunks": len(chunks),
+            "vector_index": data_source,
             "fallback_ready": True,
         }
     )
