@@ -1,8 +1,39 @@
 from src.schemas import RankedChunk
 
 
-def should_refuse(query: str, evidence: list[RankedChunk], threshold: float = 0.05) -> bool:
+OUT_OF_SCOPE_HINTS = {
+    "yolov10",
+    "yolo",
+    "股票",
+    "天气",
+    "世界杯",
+    "电影",
+}
+
+
+def should_refuse(
+    query: str,
+    evidence: list[RankedChunk],
+    threshold: float = 0.52,
+    min_keyword_score: float = 0.05,
+) -> bool:
     if not evidence:
         return True
-    return max(item.ranker_score for item in evidence) < threshold
+
+    best = max(evidence, key=lambda item: item.ranker_score)
+    if best.ranker_score >= threshold:
+        return False
+
+    if best.bm25_score >= min_keyword_score and best.ranker_score >= threshold - 0.08:
+        return False
+
+    query_lower = query.lower()
+    if any(hint in query_lower for hint in OUT_OF_SCOPE_HINTS):
+        return True
+
+    return best.ranker_score < threshold
+
+
+def refusal_message() -> str:
+    return "当前知识库未检索到足够相关的课程资料，无法基于已上传内容可靠回答。"
 

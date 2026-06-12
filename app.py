@@ -2,7 +2,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from src.answer_guard import should_refuse
+from src.answer_guard import refusal_message, should_refuse
 from src.bandit_recommender import recommend_concept, update_feedback
 from src.chunker import chunk_pages
 from src.config import get_mode
@@ -43,8 +43,8 @@ def build_knowledge_base(file_path: str | None):
 
 
 st.sidebar.title("CourseMind")
-st.sidebar.caption(f"Mode: {get_mode()}")
-uploaded = st.sidebar.file_uploader("Upload course PDF or text", type=["pdf", "txt", "md"])
+st.sidebar.caption(f"运行模式：{get_mode()}")
+uploaded = st.sidebar.file_uploader("上传课程 PDF 或文本", type=["pdf", "txt", "md"])
 
 file_path = None
 if uploaded:
@@ -53,29 +53,29 @@ if uploaded:
     file_path = str(target)
 
 pages, chunks = build_knowledge_base(file_path)
-st.sidebar.metric("Pages", len(pages))
+st.sidebar.metric("页数", len(pages))
 st.sidebar.metric("Chunks", len(chunks))
 
 tab_qa, tab_summary, tab_quiz, tab_review, tab_status = st.tabs(
-    ["Q&A", "Summary", "Quiz", "Review", "Status"]
+    ["问答", "总结", "出题", "复习", "状态"]
 )
 
 with tab_qa:
-    query = st.text_input("Question", "CourseMind 使用了哪些检索和学习推荐技术？")
-    top_k = st.slider("Top-K evidence", 1, 10, 5)
-    if st.button("Ask", type="primary"):
+    query = st.text_input("问题", "CourseMind 使用了哪些检索和学习推荐技术？")
+    top_k = st.slider("Top-K 证据", 1, 10, 5)
+    if st.button("提问", type="primary"):
         retrieved = retrieve(query, chunks, top_k=top_k)
         expanded = expand_with_graph(retrieved, chunks, hops=1)
         ranked = rerank(query, expanded, top_k=top_k)
         if should_refuse(query, ranked):
-            st.warning("No sufficiently relevant evidence was found in the current knowledge base.")
+            st.warning(refusal_message())
         else:
             result = answer_question(query, ranked)
-            st.subheader("Answer")
+            st.subheader("回答")
             st.write(result["answer"])
-            st.subheader("Citations")
+            st.subheader("引用来源")
             st.dataframe(result["citations"], use_container_width=True)
-        st.subheader("Retrieval Visualization")
+        st.subheader("检索与重排序结果")
         st.dataframe(
             [
                 {
@@ -94,33 +94,33 @@ with tab_qa:
         )
 
 with tab_summary:
-    if st.button("Generate Summary"):
+    if st.button("生成总结"):
         st.write(summarize_document(chunks))
 
 with tab_quiz:
-    num_questions = st.slider("Questions", 1, 5, 3)
+    num_questions = st.slider("题目数量", 1, 5, 3)
     quiz_items = generate_quiz(chunks, num_questions=num_questions)
     for idx, item in enumerate(quiz_items, start=1):
         st.markdown(f"**Q{idx}. {item.question}**")
-        choice = st.radio("Choose one", item.options, key=f"quiz_{idx}")
+        choice = st.radio("请选择", item.options, key=f"quiz_{idx}")
         correct = choice == item.answer
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("Submit", key=f"submit_{idx}"):
+            if st.button("提交", key=f"submit_{idx}"):
                 update_feedback(item.concept, correct)
-                st.success("Correct" if correct else f"Incorrect. Answer: {item.answer}")
+                st.success("回答正确" if correct else f"回答错误。正确答案：{item.answer}")
         with col2:
-            st.caption(f"Concept: {item.concept} | Source: {item.source_chunk_id}")
+            st.caption(f"知识点：{item.concept} | 来源：{item.source_chunk_id}")
         st.write(item.explanation)
 
 with tab_review:
     rec = recommend_concept()
-    st.metric("Recommended concept", rec["concept"])
+    st.metric("推荐复习知识点", rec["concept"])
     st.write(rec["reason"])
     st.json(rec)
 
 with tab_status:
-    st.subheader("System Status")
+    st.subheader("系统状态")
     st.write(
         {
             "mode": get_mode(),
@@ -129,3 +129,4 @@ with tab_status:
             "fallback_ready": True,
         }
     )
+
