@@ -63,3 +63,38 @@ def test_load_pdf_when_pymupdf_is_available(tmp_path):
     assert pages[0].page == 1
     assert "CourseMind" in pages[0].text
 
+
+def test_load_pdf_appends_ocr_text_for_image_pages(monkeypatch, tmp_path):
+    fitz = pytest.importorskip("fitz")
+    path = tmp_path / "image_course.pdf"
+    doc = fitz.open()
+    page = doc.new_page()
+    page.insert_text((72, 72), "PDF text layer")
+    pixmap = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, 16, 16), 0)
+    pixmap.clear_with(255)
+    page.insert_image(fitz.Rect(72, 100, 120, 148), pixmap=pixmap)
+    doc.save(str(path))
+    doc.close()
+
+    calls = []
+
+    def fake_ocr(page, *, file_path, page_number, text_layer, image_count):
+        calls.append(
+            {
+                "file_path": file_path,
+                "page_number": page_number,
+                "text_layer": text_layer,
+                "image_count": image_count,
+            }
+        )
+        return "图片中的中文信息"
+
+    monkeypatch.setattr("src.document_loader.ocr_pdf_page", fake_ocr)
+
+    pages = load_pdf(str(path))
+
+    assert len(calls) == 1
+    assert calls[0]["image_count"] == 1
+    assert "PDF text layer" in pages[0].text
+    assert "[OCR]" in pages[0].text
+    assert "图片中的中文信息" in pages[0].text

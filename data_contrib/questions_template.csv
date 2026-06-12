@@ -1,0 +1,6 @@
+query,expected_file,expected_topic,query_type,answer_keywords
+卷积神经网络为什么适合图像任务？,CNN_卷积神经网络_姓名.md,CNN,fact,"局部连接;权值共享;特征图"
+LSTM 如何缓解 RNN 的长期依赖问题？,LSTM_长短期记忆网络_姓名.pdf,LSTM,fact,"门控;遗忘门;记忆单元"
+Transformer 的注意力机制有什么作用？,Transformer_注意力机制_姓名.txt,Transformer,fact,"Query;Key;Value;权重"
+CNN 和 RNN 的主要区别是什么？,CNN_卷积神经网络_姓名.md,CNN,compare,"图像;序列;卷积;循环"
+这个资料里有没有讲世界杯？,CNN_卷积神经网络_姓名.md,资料外,out_of_scope,""
