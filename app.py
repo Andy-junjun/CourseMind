@@ -8,7 +8,7 @@ from src.chunker import chunk_pages
 from src.config import get_mode
 from src.document_loader import load_pdf
 from src.generator import answer_question, summarize_document
-from src.graph_store import expand_with_graph
+from src.graph_store import expand_with_graph, explain_graph_expansion
 from src.miniranker import rerank
 from src.retriever import retrieve
 from src.schemas import DocumentPage
@@ -32,9 +32,8 @@ def default_pages() -> list[DocumentPage]:
                 "系统支持 PDF 解析、中文 Chunk 切分、RAG 检索、原文引用、"
                 "文档总结、自动出题和复习推荐。检索阶段结合向量检索、"
                 "BM25 关键词检索和 GraphRAG-lite 图扩展。MiniRanker 会综合 "
-                "dense_score、bm25_score、graph_score、同页奖励、同章节奖励和"
-                "文本长度特征，对候选片段重新排序。Bandit 模块根据学生答题反馈"
-                "推荐薄弱知识点。"
+                "dense_score、bm25_score、graph_score、同页奖励、同章节奖励和文本特征，"
+                "对候选片段重新排序。Bandit 模块根据学生答题反馈推荐薄弱知识点。"
             ),
         )
     ]
@@ -69,6 +68,32 @@ def pages_from_chunks(chunks):
     ]
 
 
+def graph_expansion_rows(expanded, seeds, chunks, seed_ids):
+    rows = []
+    for item in expanded:
+        if item.chunk.chunk_id in seed_ids:
+            continue
+        relations = explain_graph_expansion(item.chunk, seeds, chunks, hops=1)
+        for relation in relations:
+            rows.append(
+                {
+                    "扩展chunk": relation.candidate_chunk_id,
+                    "种子chunk": relation.seed_chunk_id,
+                    "关系": relation.relation,
+                    "分数": round(relation.score, 3),
+                    "原因": relation.reason,
+                    "文件": item.chunk.file_name,
+                    "页码": item.chunk.page,
+                }
+            )
+    return rows
+
+
+def graph_reason(chunk_id, rows):
+    reasons = [row["原因"] for row in rows if row["扩展chunk"] == chunk_id]
+    return "；".join(reasons[:3])
+
+
 st.sidebar.title("CourseMind")
 st.sidebar.caption(f"运行模式：{get_mode()}")
 uploaded = st.sidebar.file_uploader("上传课程 PDF 或文本", type=["pdf", "txt", "md"])
@@ -89,12 +114,15 @@ tab_qa, tab_summary, tab_quiz, tab_review, tab_status = st.tabs(
 )
 
 with tab_qa:
-    query = st.text_input("问题", "项目评分标准是什么？")
+    query = st.text_input("问题", "神经网络中的激活函数有什么作用？")
     top_k = st.slider("Top-K 证据", 1, 10, 5)
     if st.button("提问", type="primary"):
         retrieved = retrieve(query, chunks, top_k=top_k, index=vector_index)
         expanded = expand_with_graph(retrieved, chunks, hops=1)
         ranked = rerank(query, expanded, top_k=top_k)
+        seed_ids = {item.chunk.chunk_id for item in retrieved}
+        graph_explanations = graph_expansion_rows(expanded, retrieved, chunks, seed_ids)
+
         if should_refuse(query, ranked):
             st.warning(refusal_message())
         else:
@@ -103,23 +131,31 @@ with tab_qa:
             st.write(result["answer"])
             st.subheader("引用来源")
             st.dataframe(result["citations"], use_container_width=True)
+
         st.subheader("检索与重排序结果")
         st.dataframe(
             [
                 {
                     "rank": i + 1,
+                    "来源": "原始检索" if item.chunk.chunk_id in seed_ids else "GraphRAG扩展",
                     "chunk_id": item.chunk.chunk_id,
-                    "page": item.chunk.page,
+                    "文件": item.chunk.file_name,
+                    "页码": item.chunk.page,
                     "dense": round(item.dense_score, 3),
                     "bm25": round(item.bm25_score, 3),
                     "graph": round(item.graph_score, 3),
                     "ranker": round(item.ranker_score, 3),
-                    "text": item.chunk.text[:120],
+                    "GraphRAG原因": graph_reason(item.chunk.chunk_id, graph_explanations),
+                    "文本": item.chunk.text[:120],
                 }
                 for i, item in enumerate(ranked)
             ],
             use_container_width=True,
         )
+
+        if graph_explanations:
+            st.subheader("GraphRAG 扩展解释")
+            st.dataframe(graph_explanations, use_container_width=True)
 
 with tab_summary:
     if st.button("生成总结"):

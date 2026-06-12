@@ -1,6 +1,6 @@
 import pytest
 
-from src.graph_store import expand_with_graph
+from src.graph_store import build_document_graph, expand_with_graph, explain_graph_expansion
 from src.schemas import Chunk, RetrievedChunk
 
 
@@ -91,3 +91,37 @@ def test_expand_with_graph_rejects_negative_hops():
     with pytest.raises(ValueError, match="hops"):
         expand_with_graph([RetrievedChunk(chunk=chunk)], [chunk], hops=-1)
 
+
+def test_build_document_graph_exposes_nodes_and_edges():
+    chunks = [
+        make_chunk("c1", 1, "Transformer 注意力", "一、注意力", ["Transformer"]),
+        make_chunk("c2", 1, "多头注意力", "一、注意力", ["Transformer"]),
+    ]
+
+    nodes, edges = build_document_graph(chunks)
+    node_types = {node.node_type for node in nodes}
+    relations = {edge.relation for edge in edges}
+
+    assert {"file", "page", "chunk", "concept"}.issubset(node_types)
+    assert {"contains_page", "contains_chunk", "mentions_concept", "adjacent"}.issubset(
+        relations
+    )
+
+
+def test_explain_graph_expansion_lists_relation_reasons():
+    chunks = [
+        make_chunk("c1", 1, "Transformer 注意力", "一、注意力", ["Transformer"]),
+        make_chunk("c2", 1, "多头注意力", "一、注意力", ["Transformer"]),
+        make_chunk("c3", 3, "无关内容", "二、其他", ["其他"]),
+    ]
+    seed = RetrievedChunk(chunk=chunks[0], dense_score=0.9, bm25_score=0.3)
+
+    relations = explain_graph_expansion(chunks[1], [seed], chunks, hops=1)
+
+    assert {relation.relation for relation in relations} == {
+        "same_page",
+        "same_chapter",
+        "adjacent",
+        "shared_concept",
+    }
+    assert any("共享知识点" in relation.reason for relation in relations)
