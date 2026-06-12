@@ -5,7 +5,7 @@ from typing import Any
 
 import numpy as np
 
-from src.embedder import embed_text
+from src.embedder import embed_text, get_embedding_model_path
 from src.schemas import Chunk
 
 
@@ -114,6 +114,7 @@ def save_index(
         "dim": index.dim,
         "chunk_ids": index.chunk_ids,
         "metadata": metadata or {},
+        "embedding": embedding_metadata(),
     }
     index_metadata_path(target).write_text(
         json.dumps(meta_payload, ensure_ascii=False, indent=2),
@@ -197,6 +198,21 @@ def import_faiss():
             "FAISS vector search requires faiss-cpu. Install it with `pip install faiss-cpu`."
         ) from exc
     return faiss
+
+
+def embedding_metadata() -> dict[str, str]:
+    import os
+
+    provider = os.getenv("EMBEDDING_PROVIDER", "lite").strip().lower()
+    payload = {
+        "mode": os.getenv("COURSEMIND_MODE", "mock"),
+        "provider": provider,
+    }
+    if provider in {"sentence_transformers", "sentence-transformer", "st"}:
+        payload["model_path"] = get_embedding_model_path()
+    elif provider in {"lite", "local_lite", "ngram"}:
+        payload["dim"] = os.getenv("EMBEDDING_DIM", "384")
+    return payload
 
 
 def cosine(a: list[float], b: list[float]) -> float:

@@ -136,13 +136,20 @@ def embed_text_with_fastembed(text: str) -> list[float]:
 def get_embedding_model():
     from sentence_transformers import SentenceTransformer
 
-    model_name = os.getenv("EMBEDDING_MODEL_NAME", DEFAULT_MODEL_NAME)
-    return SentenceTransformer(model_name)
+    return SentenceTransformer(get_embedding_model_path())
+
+
+def get_embedding_model_path() -> str:
+    return (
+        os.getenv("EMBEDDING_MODEL_PATH")
+        or os.getenv("EMBEDDING_MODEL_NAME")
+        or DEFAULT_MODEL_NAME
+    )
 
 
 @lru_cache(maxsize=1)
 def get_fastembed_model():
     from fastembed import TextEmbedding
 
-    model_name = os.getenv("EMBEDDING_MODEL_NAME", "BAAI/bge-small-zh-v1.5")
+    model_name = os.getenv("EMBEDDING_MODEL_NAME") or DEFAULT_MODEL_NAME
     return TextEmbedding(model_name=model_name)
