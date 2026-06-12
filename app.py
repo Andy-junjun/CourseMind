@@ -1,6 +1,8 @@
 from pathlib import Path
+import html as html_lib
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from src.answer_guard import refusal_message, should_refuse
 from src.bandit_recommender import recommend_concept, update_feedback
@@ -94,6 +96,230 @@ def graph_reason(chunk_id, rows):
     return "；".join(reasons[:3])
 
 
+def graph_visualization_html(seeds, rows, max_seed_nodes=5, max_expanded_nodes=8, max_edges=14):
+    if not rows:
+        return "", 0
+
+    seed_ids = [item.chunk.chunk_id for item in seeds[:max_seed_nodes]]
+    seed_id_set = set(seed_ids)
+    sorted_rows = sorted(rows, key=lambda row: row["分数"], reverse=True)
+
+    expanded_ids = []
+    edges = []
+    for row in sorted_rows:
+        if row["种子chunk"] not in seed_id_set:
+            continue
+        expanded_id = row["扩展chunk"]
+        if expanded_id not in expanded_ids:
+            if len(expanded_ids) >= max_expanded_nodes:
+                continue
+            expanded_ids.append(expanded_id)
+        edges.append(row)
+        if len(edges) >= max_edges:
+            break
+
+    if not edges:
+        return "", 0
+
+    seed_y = {chunk_id: 86 + index * 92 for index, chunk_id in enumerate(seed_ids)}
+    expanded_y = {
+        chunk_id: 86 + index * 92 for index, chunk_id in enumerate(expanded_ids)
+    }
+    height = max(360, 130 + 92 * max(len(seed_ids), len(expanded_ids)))
+    width = 1120
+    seed_x = 170
+    expanded_x = 840
+    line_start_x = 320
+    line_end_x = 690
+
+    relation_color = {
+        "same_page": "#2563eb",
+        "same_chapter": "#7c3aed",
+        "adjacent": "#0891b2",
+        "shared_concept": "#16a34a",
+    }
+
+    seed_cards = []
+    seed_lookup = {item.chunk.chunk_id: item.chunk for item in seeds}
+    for chunk_id in seed_ids:
+        chunk = seed_lookup[chunk_id]
+        seed_cards.append(
+            svg_node(
+                seed_x,
+                seed_y[chunk_id],
+                "种子",
+                short_label(chunk_id),
+                f"{chunk.file_name} p.{chunk.page}",
+                "#e0f2fe",
+                "#0369a1",
+            )
+        )
+
+    expanded_cards = []
+    expanded_meta = {row["扩展chunk"]: row for row in rows}
+    for chunk_id in expanded_ids:
+        row = expanded_meta[chunk_id]
+        expanded_cards.append(
+            svg_node(
+                expanded_x,
+                expanded_y[chunk_id],
+                "扩展",
+                short_label(chunk_id),
+                f"{row['文件']} p.{row['页码']}",
+                "#dcfce7",
+                "#15803d",
+            )
+        )
+
+    edge_lines = []
+    for row in edges:
+        source_y = seed_y[row["种子chunk"]]
+        target_y = expanded_y[row["扩展chunk"]]
+        color = relation_color.get(row["关系"], "#64748b")
+        mid_x = (line_start_x + line_end_x) / 2
+        mid_y = (source_y + target_y) / 2
+        edge_lines.append(
+            f"""
+            <path d="M {line_start_x} {source_y} C 460 {source_y}, 550 {target_y}, {line_end_x} {target_y}"
+                  fill="none" stroke="{color}" stroke-width="2.4" opacity="0.72" marker-end="url(#arrow)" />
+            <rect x="{mid_x - 58}" y="{mid_y - 15}" width="116" height="30" rx="6"
+                  fill="white" stroke="{color}" stroke-width="1" opacity="0.96" />
+            <text x="{mid_x}" y="{mid_y + 5}" text-anchor="middle" class="edge-label" fill="{color}">
+              {html_lib.escape(row["关系"])}
+            </text>
+            """
+        )
+
+    concept_chips = concept_chip_html(edges)
+    svg = f"""
+    <div class="graph-wrap">
+      <div class="graph-title">GraphRAG 节点关系可视化</div>
+      <svg viewBox="0 0 {width} {height}" width="100%" height="{height}" role="img">
+        <defs>
+          <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3"
+                  orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" fill="#64748b" />
+          </marker>
+        </defs>
+        <text x="{seed_x}" y="34" text-anchor="middle" class="column-title">原始检索种子 chunk</text>
+        <text x="{expanded_x}" y="34" text-anchor="middle" class="column-title">GraphRAG 扩展 chunk</text>
+        {''.join(edge_lines)}
+        {''.join(seed_cards)}
+        {''.join(expanded_cards)}
+      </svg>
+      {concept_chips}
+      <div class="legend">
+        <span><b style="color:#2563eb">same_page</b> 同页</span>
+        <span><b style="color:#7c3aed">same_chapter</b> 同章节</span>
+        <span><b style="color:#0891b2">adjacent</b> 相邻片段</span>
+        <span><b style="color:#16a34a">shared_concept</b> 共享知识点</span>
+      </div>
+    </div>
+    <style>
+      .graph-wrap {{
+        border: 1px solid #dbe3ef;
+        border-radius: 8px;
+        background: #f8fafc;
+        padding: 12px 14px 10px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }}
+      .graph-title {{
+        font-size: 16px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 6px;
+      }}
+      .column-title {{
+        font-size: 14px;
+        font-weight: 700;
+        fill: #334155;
+      }}
+      .node-title {{
+        font-size: 12px;
+        font-weight: 700;
+      }}
+      .node-label {{
+        font-size: 11px;
+        fill: #0f172a;
+      }}
+      .node-meta {{
+        font-size: 10px;
+        fill: #475569;
+      }}
+      .edge-label {{
+        font-size: 11px;
+        font-weight: 700;
+      }}
+      .concepts {{
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin: 8px 2px 4px;
+      }}
+      .concept-chip {{
+        border: 1px solid #bbf7d0;
+        background: #f0fdf4;
+        color: #166534;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+      }}
+      .legend {{
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        color: #475569;
+        font-size: 12px;
+        margin-top: 8px;
+      }}
+    </style>
+    """
+    return svg, height + 130
+
+
+def svg_node(x, y, badge, title, meta, fill, stroke):
+    return f"""
+    <g>
+      <rect x="{x - 135}" y="{y - 34}" width="270" height="68" rx="8"
+            fill="{fill}" stroke="{stroke}" stroke-width="1.6" />
+      <text x="{x - 118}" y="{y - 13}" class="node-title" fill="{stroke}">
+        {html_lib.escape(badge)}
+      </text>
+      <text x="{x - 118}" y="{y + 7}" class="node-label">
+        {html_lib.escape(title)}
+      </text>
+      <text x="{x - 118}" y="{y + 25}" class="node-meta">
+        {html_lib.escape(short_label(meta, 30))}
+      </text>
+    </g>
+    """
+
+
+def concept_chip_html(edges):
+    concepts = []
+    for row in edges:
+        reason = row["原因"]
+        marker = "共享知识点："
+        if marker not in reason:
+            continue
+        for concept in reason.split(marker, 1)[1].split("、"):
+            concept = concept.strip()
+            if concept and concept not in concepts:
+                concepts.append(concept)
+    if not concepts:
+        return ""
+    chips = "".join(
+        f'<span class="concept-chip">concept: {html_lib.escape(short_label(concept, 18))}</span>'
+        for concept in concepts[:10]
+    )
+    return f'<div class="concepts">{chips}</div>'
+
+
+def short_label(value, max_length=24):
+    text = str(value)
+    return text if len(text) <= max_length else text[: max_length - 1] + "…"
+
+
 st.sidebar.title("CourseMind")
 st.sidebar.caption(f"运行模式：{get_mode()}")
 uploaded = st.sidebar.file_uploader("上传课程 PDF 或文本", type=["pdf", "txt", "md"])
@@ -154,6 +380,10 @@ with tab_qa:
         )
 
         if graph_explanations:
+            graph_html, graph_height = graph_visualization_html(retrieved, graph_explanations)
+            if graph_html:
+                st.subheader("GraphRAG 节点关系图")
+                components.html(graph_html, height=graph_height, scrolling=True)
             st.subheader("GraphRAG 扩展解释")
             st.dataframe(graph_explanations, use_container_width=True)
 
