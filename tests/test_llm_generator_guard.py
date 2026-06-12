@@ -56,6 +56,15 @@ def test_real_llm_without_api_key_raises(monkeypatch):
         generate_text("测试")
 
 
+def test_real_mode_can_keep_mock_llm_provider(monkeypatch):
+    monkeypatch.setenv("COURSEMIND_MODE", "real")
+    monkeypatch.setenv("LLM_PROVIDER", "mock")
+
+    answer = generate_text("项目评分标准是什么？")
+
+    assert "模拟回答" in answer
+
+
 def test_get_llm_config_reads_environment(monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "openai_compatible")
     monkeypatch.setenv("LLM_API_KEY", "test-key")

@@ -22,6 +22,17 @@ def test_mock_embedding_is_deterministic_and_normalized(monkeypatch):
     assert abs(sum(value * value for value in first) - 1.0) < 1e-6
 
 
+def test_lite_embedding_runs_in_real_mode_without_native_model(monkeypatch):
+    monkeypatch.setenv("COURSEMIND_MODE", "real")
+    monkeypatch.setenv("EMBEDDING_PROVIDER", "lite")
+    monkeypatch.setenv("EMBEDDING_DIM", "384")
+
+    vector = embed_text("这个项目如何评分？")
+
+    assert len(vector) == 384
+    assert abs(sum(value * value for value in vector) - 1.0) < 1e-6
+
+
 def test_faiss_index_search_ranks_related_chinese_chunk_first(monkeypatch):
     monkeypatch.setenv("COURSEMIND_MODE", "mock")
     chunks = chunk_pages(

@@ -59,6 +59,39 @@ real   : 接入真实 embedding 模型、LLM API 等外部能力
 set COURSEMIND_MODE=mock
 ```
 
+## 轻量 Embedding
+
+默认推荐先用内置轻量 embedding：
+
+```text
+COURSEMIND_MODE=real
+EMBEDDING_PROVIDER=lite
+EMBEDDING_DIM=384
+LLM_PROVIDER=mock
+```
+
+`lite` provider 不依赖 Torch 或 ONNXRuntime，使用中文分词、字符 n-gram 和知识点 alias 生成归一化向量，再写入 FAISS。它比纯 mock hash 更适合本地中文资料检索，但仍属于轻量词法向量，不等同于 transformer 语义模型。
+
+重新构建索引：
+
+```bash
+python scripts/ingest.py
+```
+
+如果机器支持 PyTorch 或 ONNXRuntime，也可以切换：
+
+```text
+EMBEDDING_PROVIDER=sentence_transformers
+EMBEDDING_MODEL_NAME=BAAI/bge-small-zh-v1.5
+```
+
+或：
+
+```text
+EMBEDDING_PROVIDER=fastembed
+EMBEDDING_MODEL_NAME=BAAI/bge-small-zh-v1.5
+```
+
 ## 当前检索链路
 
 ```text

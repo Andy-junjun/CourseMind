@@ -16,6 +16,9 @@ class LLMConfig:
 
 def generate_text(prompt: str, system_prompt: str | None = None) -> str:
     mode = get_mode()
+    if get_llm_config().provider == "mock":
+        return generate_mock_text(prompt)
+
     if mode in {"real", "hybrid"}:
         try:
             return generate_real_text(prompt, system_prompt=system_prompt)
