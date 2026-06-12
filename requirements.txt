@@ -3,11 +3,12 @@ pytest>=8.0
 jieba>=0.42
 pymupdf>=1.24
 faiss-cpu>=1.8
-numpy>=1.26
+numpy>=1.26,<2
 
 # Optional real-mode dependencies. Install only when the corresponding module is used.
 # sentence-transformers>=3.0
 # fastembed>=0.8
+# pytesseract>=0.3
 # rank-bm25>=0.2
 # networkx>=3.0
 # torch>=2.0

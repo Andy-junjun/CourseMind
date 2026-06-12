@@ -4,7 +4,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .streamlit/secrets.toml
-data/raw/*
 data/processed/*
 data/indexes/*
 data/training/*
@@ -12,6 +11,12 @@ data/training/*
 !data/processed/.gitkeep
 !data/indexes/.gitkeep
 !data/training/.gitkeep
+!data/training/*.jsonl
+!data/training/*.csv
+!data/training/README.md
+models/embedding/*
+!models/embedding/.gitkeep
+!models/embedding/README.md
 *.pt
 *.pkl
 *.index

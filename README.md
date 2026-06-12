@@ -45,6 +45,38 @@ data/indexes/faiss.meta.json
 
 这些文件是本地生成物，默认不提交到 Git。页面启动时会优先读取 `data/indexes/faiss.index`；如果索引不存在，才使用内置示例。
 
+## PDF 图片与 OCR
+
+PDF 可能同时包含文本层和图片。当前解析流程是：
+
+```text
+每页 PDF
+-> PyMuPDF 提取文本层
+-> 检测页面图片数量
+-> 按 OCR_MODE 判断是否渲染页面做 OCR
+-> 文本层 + OCR 文本合并
+-> chunk / embedding / FAISS 入库
+```
+
+默认关闭 OCR：
+
+```text
+OCR_PROVIDER=none
+```
+
+如果本机安装了 Tesseract 可启用：
+
+```text
+OCR_PROVIDER=tesseract
+OCR_MODE=auto
+OCR_LANG=chi_sim+eng
+OCR_TEXT_THRESHOLD=1200
+```
+
+`OCR_MODE=auto` 表示：页面有图片且文本层较短时才 OCR。OCR 结果会缓存到 `data/processed/ocr_cache/`，避免重复识别。
+
+注意：启用 Tesseract 需要额外安装系统级 Tesseract 程序和中文语言包，Python 依赖可安装 `pytesseract`。
+
 ## 运行模式
 
 ```text
@@ -96,7 +128,7 @@ EMBEDDING_MODEL_NAME=BAAI/bge-small-zh-v1.5
 
 ```text
 data/raw 文档
--> PDF/文本解析
+-> PDF/文本/OCR 解析
 -> 中文 Chunk 切分与知识点抽取
 -> embedding
 -> FAISS IndexFlatIP 向量索引
@@ -112,4 +144,4 @@ data/raw 文档
 python -m pytest
 ```
 
-当前测试覆盖文档解析、中文切分、FAISS 持久化索引、检索、GraphRAG-lite、MiniRanker、LLM mock 和答案保护。
+当前测试覆盖文档解析、PDF 图片 OCR 管线、中文切分、FAISS 持久化索引、检索、GraphRAG-lite、MiniRanker、LLM mock 和答案保护。
