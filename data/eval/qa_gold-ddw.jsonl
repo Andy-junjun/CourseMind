@@ -1,0 +1,18 @@
+{"query": "CNN中的卷积核有什么作用？", "answer_keywords": ["特征提取", "局部连接", "权重共享"], "evidence_pages": [5], "must_refuse": false}
+{"query": "什么是池化层？它有哪些类型？", "answer_keywords": ["降维", "最大池化", "平均池化"], "evidence_pages": [6], "must_refuse": false}
+{"query": "CNN中的感受野是什么意思？", "answer_keywords": ["输入区域", "卷积核大小", "层数加深"], "evidence_pages": [7], "must_refuse": false}
+{"query": "步长和填充对CNN输出尺寸有什么影响？", "answer_keywords": ["输出缩小", "边界信息", "计算公式"], "evidence_pages": [8], "must_refuse": false}
+{"query": "CNN为什么具有平移不变性？", "answer_keywords": ["权值共享", "卷积操作", "特征位置"], "evidence_pages": [9], "must_refuse": false}
+{"query": "什么是循环神经网络？", "answer_keywords": ["序列", "隐藏状态", "时间步"], "evidence_pages": [13], "must_refuse": false}
+{"query": "RNN的隐藏状态是如何更新的？", "answer_keywords": ["当前输入", "上一时刻状态", "tanh激活"], "evidence_pages": [15], "must_refuse": false}
+{"query": "RNN在训练时为什么会出现梯度消失？", "answer_keywords": ["时间步长", "连乘", "梯度衰减"], "evidence_pages": [34], "must_refuse": false}
+{"query": "LSTM引入了哪几个门控机制？", "answer_keywords": ["遗忘门", "输入门", "输出门"], "evidence_pages": [37], "must_refuse": false}
+{"query": "LSTM的遗忘门有什么作用？", "answer_keywords": ["丢弃信息", "记忆清理", "防止过载"], "evidence_pages": [38], "must_refuse": false}
+{"query": "LSTM如何解决RNN的长期依赖问题？", "answer_keywords": ["记忆单元", "门控", "梯度保持"], "evidence_pages": [37], "must_refuse": false}
+{"query": "GRU相比LSTM做了哪些简化？", "answer_keywords": ["更新门", "重置门", "参数更少"], "evidence_pages": [56], "must_refuse": false}
+{"query": "GRU中的重置门起什么作用？", "answer_keywords": ["忽略历史", "候选状态", "短期依赖"], "evidence_pages": [59], "must_refuse": false}
+{"query": "什么是自注意力机制？", "answer_keywords": ["Query", "Key", "Value", "权重计算"], "evidence_pages": [1], "must_refuse": false}
+{"query": "多头注意力的优势是什么？", "answer_keywords": ["多角度", "不同子空间", "并行计算"], "evidence_pages": [1], "must_refuse": false}
+{"query": "Transformer为什么需要位置编码？", "answer_keywords": ["序列顺序", "正弦余弦", "无RNN结构"], "evidence_pages": [1], "must_refuse": false}
+{"query": "Transformer与RNN的主要区别是什么？", "answer_keywords": ["并行计算", "注意力机制", "长距离依赖"], "evidence_pages": [1], "must_refuse": false}
+{"query": "这个资料里有没有讲YOLOv10？", "answer_keywords": [], "evidence_pages": [], "must_refuse": true}
