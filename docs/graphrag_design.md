@@ -79,7 +79,7 @@ GraphRAG 节点关系图
 GraphRAG 扩展解释
 ```
 
-`GraphRAG 节点关系图` 使用 PyVis 展示当前问题相关子图，而不是展示全量知识图。
+`GraphRAG 节点关系图` 使用 React Force Graph 展示当前问题相关子图，而不是展示全量知识图。
 
 当前问题子图包含：
 
@@ -107,10 +107,11 @@ Query          灰色
 交互能力：
 
 ```text
-节点可拖动
+节点可拖动、滚轮缩放
 鼠标悬停 chunk 显示 chunk_id、file、page、concepts、前 260 字文本
-边上显示 seed / same_page / adjacent / shared_concept 等关键关系
-红色节点高亮最终证据
+点击节点会在右侧详情面板显示文件、页码、知识点和文本摘要
+边上默认显示 seed / same_page / adjacent 等关键关系，shared_concept 主要用颜色和悬停信息表达，避免画面过密
+红色发光节点高亮最终证据
 ```
 
 `检索与重排序结果` 会显示：

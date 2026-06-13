@@ -4,8 +4,6 @@ jieba>=0.42
 pymupdf>=1.24
 faiss-cpu>=1.8
 numpy>=1.26,<2
-networkx>=3.0
-pyvis>=0.3.2
 
 # Optional real-mode dependencies. Install only when the corresponding module is used.
 # sentence-transformers>=3.0

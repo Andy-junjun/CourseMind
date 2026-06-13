@@ -1,5 +1,6 @@
 from pathlib import Path
 import html as html_lib
+import json
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -98,26 +99,23 @@ def graph_reason(chunk_id, rows):
 
 def graph_visualization_html(query, seeds, rows, ranked, chunks):
     try:
-        return pyvis_graph_visualization_html(query, seeds, rows, ranked, chunks)
+        return react_force_graph_visualization_html(query, seeds, rows, ranked, chunks)
     except Exception:
         return static_graph_visualization_html(seeds, rows)
 
 
-def pyvis_graph_visualization_html(
+def react_force_graph_visualization_html(
     query,
     seeds,
     rows,
     ranked,
     chunks,
     max_seed_nodes=5,
-    max_expanded_nodes=10,
-    max_edges=18,
+    max_expanded_nodes=8,
+    max_edges=14,
 ):
     if not rows:
         return "", 0
-
-    import networkx as nx
-    from pyvis.network import Network
 
     seed_ids = [item.chunk.chunk_id for item in seeds[:max_seed_nodes]]
     seed_id_set = set(seed_ids)
@@ -142,13 +140,50 @@ def pyvis_graph_visualization_html(
     if not selected_rows:
         return "", 0
 
-    graph = nx.DiGraph()
+    nodes_by_id = {}
+    links = []
+
+    def add_node(node_id, node_type, label, tooltip="", **extra):
+        existing = nodes_by_id.get(node_id)
+        style = node_style(node_type)
+        payload = {
+            "id": node_id,
+            "type": node_type,
+            "label": label,
+            "tooltip": tooltip or label,
+            "color": style["color"],
+            "val": style["val"],
+            "shape": style["shape"],
+        }
+        payload.update(extra)
+        if existing:
+            if existing["type"] != "evidence" or node_type == "evidence":
+                existing.update(payload)
+            return
+        nodes_by_id[node_id] = payload
+
+    def add_link(source, target, relation, score=1.0, reason=""):
+        if source not in nodes_by_id or target not in nodes_by_id:
+            return
+        links.append(
+            {
+                "source": source,
+                "target": target,
+                "relation": relation,
+                "label": edge_label(relation),
+                "color": edge_color(relation),
+                "width": 1.3 + min(float(score), 1.0) * 2.4,
+                "score": round(float(score), 3),
+                "reason": reason,
+            }
+        )
+
     query_id = "query:current"
-    graph.add_node(
+    add_node(
         query_id,
-        type="query",
+        "query",
         label="Query",
-        title=f"<b>Query</b><br>{html_lib.escape(query)}",
+        tooltip=f"Query\n{query}",
     )
 
     related_chunk_ids = set(seed_ids) | set(expanded_ids) | ranked_ids
@@ -157,174 +192,112 @@ def pyvis_graph_visualization_html(
         if chunk is None:
             continue
         node_type = "evidence" if chunk_id in ranked_ids else "chunk"
-        graph.add_node(
+        add_node(
             chunk_id,
-            type=node_type,
+            node_type,
             label=short_label(chunk_id, 16),
-            title=chunk_hover_title(chunk),
+            tooltip=chunk_hover_title(chunk, plain_text=True),
+            file_name=chunk.file_name,
+            page=chunk.page,
+            concepts=chunk.concepts[:8],
+            text=" ".join(chunk.text.split())[:260],
         )
         file_id = f"doc:{chunk.file_name}"
         page_id = f"page:{chunk.file_name}:{chunk.page}"
-        graph.add_node(
+        add_node(
             file_id,
-            type="document",
+            "document",
             label=short_label(chunk.file_name, 18),
-            title=f"<b>Document</b><br>{html_lib.escape(chunk.file_name)}",
+            tooltip=f"Document\n{chunk.file_name}",
         )
-        graph.add_node(
+        add_node(
             page_id,
-            type="page",
+            "page",
             label=f"Page {chunk.page}",
-            title=(
-                f"<b>Page</b><br>{html_lib.escape(chunk.file_name)}"
-                f"<br>page: {chunk.page}"
-            ),
+            tooltip=f"Page\n{chunk.file_name}\npage: {chunk.page}",
         )
-        graph.add_edge(file_id, page_id, relation="contains")
-        graph.add_edge(page_id, chunk_id, relation="contains")
-        for concept in chunk.concepts[:4]:
+        add_link(file_id, page_id, "contains", 0.35)
+        add_link(page_id, chunk_id, "contains", 0.45)
+        for concept in chunk.concepts[:2]:
             concept_id = f"concept:{concept}"
-            graph.add_node(
+            add_node(
                 concept_id,
-                type="concept",
+                "concept",
                 label=short_label(concept, 14),
-                title=f"<b>Concept</b><br>{html_lib.escape(concept)}",
+                tooltip=f"Concept\n{concept}",
             )
-            graph.add_edge(chunk_id, concept_id, relation="concept")
+            add_link(chunk_id, concept_id, "concept", 0.55)
 
     for seed_id in seed_ids:
-        if seed_id in graph:
-            graph.nodes[seed_id]["type"] = (
-                "evidence" if seed_id in ranked_ids else "seed"
-            )
-            graph.add_edge(query_id, seed_id, relation="seed")
+        if seed_id in nodes_by_id:
+            if seed_id not in ranked_ids:
+                nodes_by_id[seed_id].update(node_style("seed"))
+                nodes_by_id[seed_id]["type"] = "seed"
+            add_link(query_id, seed_id, "seed", 0.9)
 
     for row in selected_rows:
         seed_id = row["种子chunk"]
         expanded_id = row["扩展chunk"]
-        if seed_id in graph and expanded_id in graph:
-            graph.add_edge(
+        if seed_id in nodes_by_id and expanded_id in nodes_by_id:
+            add_link(
                 seed_id,
                 expanded_id,
-                relation=row["关系"],
-                weight=float(row["分数"]),
-                title=html_lib.escape(row["原因"]),
+                row["关系"],
+                float(row["分数"]),
+                row["原因"],
             )
 
-    net = Network(
-        height="620px",
-        width="100%",
-        bgcolor="#ffffff",
-        font_color="#111827",
-        directed=True,
-        cdn_resources="in_line",
-    )
-    net.barnes_hut(gravity=-4500, central_gravity=0.25, spring_length=150)
-    net.set_options(
-        """
-        {
-          "interaction": {
-            "hover": true,
-            "tooltipDelay": 120,
-            "navigationButtons": true,
-            "keyboard": true
-          },
-          "physics": {
-            "stabilization": { "iterations": 120 }
-          },
-          "edges": {
-            "smooth": { "type": "dynamic" },
-            "font": { "size": 11, "align": "middle" },
-            "arrows": { "to": { "enabled": true, "scaleFactor": 0.7 } }
-          }
-        }
-        """
-    )
-
-    for node_id, data in graph.nodes(data=True):
-        node_type = data.get("type", "chunk")
-        color, shape, size = node_style(node_type)
-        net.add_node(
-            node_id,
-            label=data.get("label", short_label(node_id, 16)),
-            title=data.get("title", html_lib.escape(str(node_id))),
-            color=color,
-            shape=shape,
-            size=size,
-            borderWidth=3 if node_type == "evidence" else 1,
-        )
-
-    for source, target, data in graph.edges(data=True):
-        relation = data.get("relation", "")
-        net.add_edge(
-            source,
-            target,
-            label=edge_label(relation),
-            title=data.get("title", relation),
-            value=float(data.get("weight", 1.0)),
-            color=edge_color(relation),
-        )
-
-    html = net.generate_html(notebook=False)
-    html = html.replace(
-        "<body>",
-        """
-        <body>
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                    padding: 8px 12px; border-bottom: 1px solid #e5e7eb;">
-          <div style="font-weight: 700; color: #111827;">当前问题相关 GraphRAG 子图</div>
-          <div style="font-size: 12px; color: #4b5563;">
-            可拖动节点；悬停 chunk 查看文件、页码、知识点和文本摘要；红色节点为最终证据。
-          </div>
-          <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:6px; font-size:12px;">
-            <span style="color:#4C78A8">● Document</span>
-            <span style="color:#54A24B">● Page</span>
-            <span style="color:#F58518">● Chunk</span>
-            <span style="color:#B279A2">● Concept</span>
-            <span style="color:#E45756">● Final Evidence</span>
-          </div>
-        </div>
-        """,
-        1,
-    )
+    graph_data = json.dumps(
+        {"nodes": list(nodes_by_id.values()), "links": links},
+        ensure_ascii=False,
+    ).replace("</", "<\\/")
+    html = react_force_graph_html(graph_data)
     return html, 760
 
 
 def node_style(node_type):
     if node_type == "query":
-        return "#64748b", "diamond", 24
+        return {"color": "#94a3b8", "shape": "diamond", "val": 8}
     if node_type == "document":
-        return "#4C78A8", "box", 20
+        return {"color": "#60a5fa", "shape": "square", "val": 6}
     if node_type == "page":
-        return "#54A24B", "box", 18
+        return {"color": "#34d399", "shape": "square", "val": 5}
     if node_type == "concept":
-        return "#B279A2", "ellipse", 18
+        return {"color": "#c084fc", "shape": "circle", "val": 5}
     if node_type == "seed":
-        return "#F58518", "dot", 20
+        return {"color": "#f59e0b", "shape": "circle", "val": 7}
     if node_type == "evidence":
-        return "#E45756", "star", 28
-    return "#F58518", "dot", 16
+        return {"color": "#ef4444", "shape": "star", "val": 10}
+    return {"color": "#f59e0b", "shape": "circle", "val": 4}
 
 
 def edge_color(relation):
     return {
-        "seed": "#64748b",
-        "contains": "#94a3b8",
-        "concept": "#B279A2",
-        "same_page": "#2563eb",
-        "same_chapter": "#7c3aed",
-        "adjacent": "#0891b2",
-        "shared_concept": "#16a34a",
-    }.get(relation, "#64748b")
+        "seed": "#94a3b8",
+        "contains": "#475569",
+        "concept": "#c084fc",
+        "same_page": "#60a5fa",
+        "same_chapter": "#a78bfa",
+        "adjacent": "#22d3ee",
+        "shared_concept": "#34d399",
+    }.get(relation, "#94a3b8")
 
 
 def edge_label(relation):
-    return relation if relation in {"seed", "same_page", "adjacent", "shared_concept"} else ""
+    return relation if relation in {"seed", "same_page", "adjacent"} else ""
 
 
-def chunk_hover_title(chunk):
+def chunk_hover_title(chunk, plain_text=False):
     concepts = ", ".join(chunk.concepts[:8])
     text = " ".join(chunk.text.split())[:260]
+    if plain_text:
+        return (
+            f"chunk_id: {chunk.chunk_id}\n"
+            f"file: {chunk.file_name}\n"
+            f"page: {chunk.page}\n"
+            f"concepts: {concepts}\n\n"
+            f"text: {text}..."
+        )
     return (
         f"<b>chunk_id:</b> {html_lib.escape(chunk.chunk_id)}<br>"
         f"<b>file:</b> {html_lib.escape(chunk.file_name)}<br>"
@@ -332,6 +305,345 @@ def chunk_hover_title(chunk):
         f"<b>concepts:</b> {html_lib.escape(concepts)}<br><br>"
         f"<b>text:</b> {html_lib.escape(text)}..."
     )
+
+
+def react_force_graph_html(graph_data):
+    return f"""
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    html, body {{
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #090d18;
+      color: #e5e7eb;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }}
+    .shell {{
+      height: 748px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      background:
+        radial-gradient(circle at 12% 10%, rgba(96, 165, 250, 0.18), transparent 26%),
+        radial-gradient(circle at 86% 26%, rgba(192, 132, 252, 0.14), transparent 28%),
+        #090d18;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 8px;
+      box-sizing: border-box;
+    }}
+    .topbar {{
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    }}
+    .title {{
+      font-size: 16px;
+      font-weight: 700;
+      color: #f8fafc;
+    }}
+    .hint {{
+      margin-top: 4px;
+      font-size: 12px;
+      color: #94a3b8;
+    }}
+    .legend {{
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px 12px;
+      max-width: 520px;
+      font-size: 12px;
+      color: #cbd5e1;
+    }}
+    .legend-item {{
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }}
+    .dot {{
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 12px currentColor;
+    }}
+    .main {{
+      position: relative;
+      min-height: 0;
+    }}
+    #graph {{
+      position: absolute;
+      inset: 0;
+    }}
+    .inspector {{
+      position: absolute;
+      right: 14px;
+      top: 14px;
+      width: min(340px, calc(100% - 28px));
+      max-height: 276px;
+      overflow: auto;
+      padding: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.88);
+      box-shadow: 0 18px 46px rgba(0, 0, 0, 0.34);
+      backdrop-filter: blur(10px);
+      box-sizing: border-box;
+      font-size: 12px;
+      line-height: 1.55;
+      color: #dbeafe;
+    }}
+    .inspector-title {{
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #f8fafc;
+      word-break: break-all;
+    }}
+    .inspector-meta {{
+      color: #bfdbfe;
+      word-break: break-word;
+    }}
+    .inspector-text {{
+      margin-top: 8px;
+      color: #cbd5e1;
+      word-break: break-word;
+    }}
+    .loading {{
+      padding: 24px;
+      color: #cbd5e1;
+      font-size: 13px;
+    }}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div>
+        <div class="title">GraphRAG 当前问题子图</div>
+        <div class="hint">React Force Graph 渲染；拖动节点、滚轮缩放，点击 chunk 查看证据信息。</div>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="dot" style="color:#94a3b8;background:#94a3b8"></span>Query</span>
+        <span class="legend-item"><span class="dot" style="color:#60a5fa;background:#60a5fa"></span>Document</span>
+        <span class="legend-item"><span class="dot" style="color:#34d399;background:#34d399"></span>Page</span>
+        <span class="legend-item"><span class="dot" style="color:#f59e0b;background:#f59e0b"></span>Chunk</span>
+        <span class="legend-item"><span class="dot" style="color:#c084fc;background:#c084fc"></span>Concept</span>
+        <span class="legend-item"><span class="dot" style="color:#ef4444;background:#ef4444"></span>Final Evidence</span>
+      </div>
+    </div>
+    <div class="main">
+      <div id="graph"><div class="loading">正在加载 React Force Graph...</div></div>
+      <div id="inspector" class="inspector">
+        <div class="inspector-title">点击一个节点查看详情</div>
+        <div class="inspector-meta">红色节点是 MiniRanker 最终采用的证据；橙色节点是原始 seed chunk；绿色和紫色节点展示页码与知识点连接。</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/react-force-graph-2d"></script>
+  <script>
+    const graphData = {graph_data};
+    const nodeStyles = {{
+      query: {{ labelColor: "#f8fafc", stroke: "#cbd5e1" }},
+      document: {{ labelColor: "#bfdbfe", stroke: "#93c5fd" }},
+      page: {{ labelColor: "#bbf7d0", stroke: "#86efac" }},
+      concept: {{ labelColor: "#e9d5ff", stroke: "#d8b4fe" }},
+      seed: {{ labelColor: "#fde68a", stroke: "#fbbf24" }},
+      evidence: {{ labelColor: "#fecaca", stroke: "#fca5a5" }},
+      chunk: {{ labelColor: "#fde68a", stroke: "#fbbf24" }}
+    }};
+
+    function drawStar(ctx, x, y, radius, color) {{
+      ctx.beginPath();
+      for (let i = 0; i < 10; i += 1) {{
+        const angle = Math.PI / 5 * i - Math.PI / 2;
+        const r = i % 2 === 0 ? radius : radius * 0.48;
+        const px = x + Math.cos(angle) * r;
+        const py = y + Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }}
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+    }}
+
+    function escapeHtml(value) {{
+      return String(value ?? "").replace(/[&<>"']/g, ch => ({{
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }}[ch]));
+    }}
+
+    function renderInspector(node) {{
+      const panel = document.getElementById("inspector");
+      if (!node) return;
+      const concepts = Array.isArray(node.concepts) && node.concepts.length
+        ? `<div class="inspector-meta">concepts: ${{escapeHtml(node.concepts.join(", "))}}</div>`
+        : "";
+      const file = node.file_name ? `<div class="inspector-meta">file: ${{escapeHtml(node.file_name)}}</div>` : "";
+      const page = node.page ? `<div class="inspector-meta">page: ${{escapeHtml(node.page)}}</div>` : "";
+      const text = node.text ? `<div class="inspector-text">${{escapeHtml(node.text)}}...</div>` : "";
+      panel.innerHTML = `
+        <div class="inspector-title">${{escapeHtml(node.label || node.id)}}</div>
+        <div class="inspector-meta">type: ${{escapeHtml(node.type)}}</div>
+        ${{file}}${{page}}${{concepts}}${{text}}
+      `;
+    }}
+
+    function drawNode(node, ctx, globalScale) {{
+      const radius = Math.max(4.5, Math.sqrt(node.val || 4) * 2.2);
+      const color = node.color || "#f59e0b";
+      ctx.save();
+      ctx.shadowColor = color;
+      ctx.shadowBlur = node.type === "evidence" ? 18 : 8;
+
+      if (node.shape === "square") {{
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        if (ctx.roundRect) {{
+          ctx.roundRect(node.x - radius, node.y - radius, radius * 2, radius * 2, 3);
+        }} else {{
+          ctx.rect(node.x - radius, node.y - radius, radius * 2, radius * 2);
+        }}
+        ctx.fill();
+      }} else if (node.shape === "diamond") {{
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(node.x, node.y - radius * 1.25);
+        ctx.lineTo(node.x + radius * 1.25, node.y);
+        ctx.lineTo(node.x, node.y + radius * 1.25);
+        ctx.lineTo(node.x - radius * 1.25, node.y);
+        ctx.closePath();
+        ctx.fill();
+      }} else if (node.shape === "star") {{
+        drawStar(ctx, node.x, node.y, radius * 1.45, color);
+      }} else {{
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, radius, 0, 2 * Math.PI, false);
+        ctx.fill();
+      }}
+
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = node.type === "evidence" ? 2.2 : 1.2;
+      ctx.strokeStyle = nodeStyles[node.type]?.stroke || "#fbbf24";
+      ctx.stroke();
+
+      const fontSize = Math.max(9, 13 / globalScale);
+      const alwaysLabel = ["query", "evidence", "seed", "page"].includes(node.type);
+      const detailLabel = globalScale > 1.55 && ["document", "chunk"].includes(node.type);
+      const conceptLabel = globalScale > 2.2 && node.type === "concept";
+      if (alwaysLabel || detailLabel || conceptLabel) {{
+        const label = node.label || node.id;
+        ctx.font = `${{fontSize}}px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif`;
+        const labelWidth = ctx.measureText(label).width + 10;
+        ctx.fillStyle = "rgba(9, 13, 24, 0.62)";
+        ctx.fillRect(node.x - labelWidth / 2, node.y + radius + 2, labelWidth, fontSize + 6);
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillStyle = nodeStyles[node.type]?.labelColor || "#e5e7eb";
+        ctx.fillText(label, node.x, node.y + radius + 5);
+      }}
+      ctx.restore();
+    }}
+
+    function drawLinkLabel(link, ctx, globalScale) {{
+      if (!link.label || globalScale > 1.9) return;
+      const start = link.source;
+      const end = link.target;
+      if (!start || !end || start.x === undefined || end.x === undefined) return;
+      const textPos = {{ x: start.x + (end.x - start.x) * 0.5, y: start.y + (end.y - start.y) * 0.5 }};
+      ctx.save();
+      ctx.font = `${{Math.max(8, 10 / globalScale)}}px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "rgba(226, 232, 240, 0.72)";
+      ctx.fillText(link.label, textPos.x, textPos.y);
+      ctx.restore();
+    }}
+
+    let fgRef = null;
+    let forceConfigured = false;
+    let fitDone = false;
+
+    function boot() {{
+      const ForceGraph2D = window.ForceGraph2D || window.ReactForceGraph2D || window["react-force-graph-2d"];
+      const rootEl = document.getElementById("graph");
+      if (!window.React || !window.ReactDOM || !ForceGraph2D) {{
+        rootEl.innerHTML = '<div class="loading">React Force Graph 加载失败。请检查网络或 CDN 访问权限。</div>';
+        return;
+      }}
+      const Graph = React.createElement(ForceGraph2D, {{
+        ref: graph => {{
+          fgRef = graph;
+          if (graph && !forceConfigured) {{
+            forceConfigured = true;
+            setTimeout(() => {{
+              try {{
+                graph.d3Force("charge").strength(-190);
+                graph.d3Force("link").distance(link => {{
+                  if (link.relation === "contains") return 62;
+                  if (link.relation === "concept") return 52;
+                  if (link.relation === "seed") return 118;
+                  return 104;
+                }});
+                graph.d3ReheatSimulation();
+              }} catch (err) {{}}
+            }}, 0);
+          }}
+        }},
+        graphData,
+        backgroundColor: "rgba(0,0,0,0)",
+        nodeId: "id",
+        nodeLabel: node => node.tooltip || node.label || node.id,
+        nodeVal: node => node.val || 4,
+        linkLabel: link => [link.relation, link.score ? `score: ${{link.score}}` : "", link.reason || ""].filter(Boolean).join("\\n"),
+        linkColor: link => link.color || "#64748b",
+        linkWidth: link => link.width || 1.5,
+        linkDirectionalArrowLength: 4,
+        linkDirectionalArrowRelPos: 1,
+        linkDirectionalParticles: link => link.relation === "seed" ? 2 : 0,
+        linkDirectionalParticleWidth: link => link.relation === "seed" ? 2.4 : 1.6,
+        cooldownTicks: 90,
+        d3AlphaDecay: 0.035,
+        d3VelocityDecay: 0.28,
+        onNodeClick: renderInspector,
+        onNodeHover: node => {{ document.body.style.cursor = node ? "pointer" : "default"; }},
+        onEngineStop: () => {{
+          if (fgRef && !fitDone) {{
+            fitDone = true;
+            setTimeout(() => fgRef.zoomToFit(360, 72), 50);
+          }}
+        }},
+        nodeCanvasObject: drawNode,
+        linkCanvasObjectMode: () => "after",
+        linkCanvasObject: drawLinkLabel
+      }});
+      if (ReactDOM.createRoot) {{
+        ReactDOM.createRoot(rootEl).render(Graph);
+      }} else {{
+        ReactDOM.render(Graph, rootEl);
+      }}
+    }}
+    window.addEventListener("load", boot);
+  </script>
+</body>
+</html>
+"""
 
 
 def static_graph_visualization_html(seeds, rows, max_seed_nodes=5, max_expanded_nodes=8, max_edges=14):
