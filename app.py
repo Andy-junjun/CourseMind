@@ -96,7 +96,245 @@ def graph_reason(chunk_id, rows):
     return "；".join(reasons[:3])
 
 
-def graph_visualization_html(seeds, rows, max_seed_nodes=5, max_expanded_nodes=8, max_edges=14):
+def graph_visualization_html(query, seeds, rows, ranked, chunks):
+    try:
+        return pyvis_graph_visualization_html(query, seeds, rows, ranked, chunks)
+    except Exception:
+        return static_graph_visualization_html(seeds, rows)
+
+
+def pyvis_graph_visualization_html(
+    query,
+    seeds,
+    rows,
+    ranked,
+    chunks,
+    max_seed_nodes=5,
+    max_expanded_nodes=10,
+    max_edges=18,
+):
+    if not rows:
+        return "", 0
+
+    import networkx as nx
+    from pyvis.network import Network
+
+    seed_ids = [item.chunk.chunk_id for item in seeds[:max_seed_nodes]]
+    seed_id_set = set(seed_ids)
+    ranked_ids = {item.chunk.chunk_id for item in ranked}
+    chunks_by_id = {chunk.chunk_id: chunk for chunk in chunks}
+    sorted_rows = sorted(rows, key=lambda row: row["分数"], reverse=True)
+
+    selected_rows = []
+    expanded_ids = []
+    for row in sorted_rows:
+        if row["种子chunk"] not in seed_id_set:
+            continue
+        expanded_id = row["扩展chunk"]
+        if expanded_id not in expanded_ids:
+            if len(expanded_ids) >= max_expanded_nodes:
+                continue
+            expanded_ids.append(expanded_id)
+        selected_rows.append(row)
+        if len(selected_rows) >= max_edges:
+            break
+
+    if not selected_rows:
+        return "", 0
+
+    graph = nx.DiGraph()
+    query_id = "query:current"
+    graph.add_node(
+        query_id,
+        type="query",
+        label="Query",
+        title=f"<b>Query</b><br>{html_lib.escape(query)}",
+    )
+
+    related_chunk_ids = set(seed_ids) | set(expanded_ids) | ranked_ids
+    for chunk_id in related_chunk_ids:
+        chunk = chunks_by_id.get(chunk_id)
+        if chunk is None:
+            continue
+        node_type = "evidence" if chunk_id in ranked_ids else "chunk"
+        graph.add_node(
+            chunk_id,
+            type=node_type,
+            label=short_label(chunk_id, 16),
+            title=chunk_hover_title(chunk),
+        )
+        file_id = f"doc:{chunk.file_name}"
+        page_id = f"page:{chunk.file_name}:{chunk.page}"
+        graph.add_node(
+            file_id,
+            type="document",
+            label=short_label(chunk.file_name, 18),
+            title=f"<b>Document</b><br>{html_lib.escape(chunk.file_name)}",
+        )
+        graph.add_node(
+            page_id,
+            type="page",
+            label=f"Page {chunk.page}",
+            title=(
+                f"<b>Page</b><br>{html_lib.escape(chunk.file_name)}"
+                f"<br>page: {chunk.page}"
+            ),
+        )
+        graph.add_edge(file_id, page_id, relation="contains")
+        graph.add_edge(page_id, chunk_id, relation="contains")
+        for concept in chunk.concepts[:4]:
+            concept_id = f"concept:{concept}"
+            graph.add_node(
+                concept_id,
+                type="concept",
+                label=short_label(concept, 14),
+                title=f"<b>Concept</b><br>{html_lib.escape(concept)}",
+            )
+            graph.add_edge(chunk_id, concept_id, relation="concept")
+
+    for seed_id in seed_ids:
+        if seed_id in graph:
+            graph.nodes[seed_id]["type"] = (
+                "evidence" if seed_id in ranked_ids else "seed"
+            )
+            graph.add_edge(query_id, seed_id, relation="seed")
+
+    for row in selected_rows:
+        seed_id = row["种子chunk"]
+        expanded_id = row["扩展chunk"]
+        if seed_id in graph and expanded_id in graph:
+            graph.add_edge(
+                seed_id,
+                expanded_id,
+                relation=row["关系"],
+                weight=float(row["分数"]),
+                title=html_lib.escape(row["原因"]),
+            )
+
+    net = Network(
+        height="620px",
+        width="100%",
+        bgcolor="#ffffff",
+        font_color="#111827",
+        directed=True,
+        cdn_resources="in_line",
+    )
+    net.barnes_hut(gravity=-4500, central_gravity=0.25, spring_length=150)
+    net.set_options(
+        """
+        {
+          "interaction": {
+            "hover": true,
+            "tooltipDelay": 120,
+            "navigationButtons": true,
+            "keyboard": true
+          },
+          "physics": {
+            "stabilization": { "iterations": 120 }
+          },
+          "edges": {
+            "smooth": { "type": "dynamic" },
+            "font": { "size": 11, "align": "middle" },
+            "arrows": { "to": { "enabled": true, "scaleFactor": 0.7 } }
+          }
+        }
+        """
+    )
+
+    for node_id, data in graph.nodes(data=True):
+        node_type = data.get("type", "chunk")
+        color, shape, size = node_style(node_type)
+        net.add_node(
+            node_id,
+            label=data.get("label", short_label(node_id, 16)),
+            title=data.get("title", html_lib.escape(str(node_id))),
+            color=color,
+            shape=shape,
+            size=size,
+            borderWidth=3 if node_type == "evidence" else 1,
+        )
+
+    for source, target, data in graph.edges(data=True):
+        relation = data.get("relation", "")
+        net.add_edge(
+            source,
+            target,
+            label=edge_label(relation),
+            title=data.get("title", relation),
+            value=float(data.get("weight", 1.0)),
+            color=edge_color(relation),
+        )
+
+    html = net.generate_html(notebook=False)
+    html = html.replace(
+        "<body>",
+        """
+        <body>
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                    padding: 8px 12px; border-bottom: 1px solid #e5e7eb;">
+          <div style="font-weight: 700; color: #111827;">当前问题相关 GraphRAG 子图</div>
+          <div style="font-size: 12px; color: #4b5563;">
+            可拖动节点；悬停 chunk 查看文件、页码、知识点和文本摘要；红色节点为最终证据。
+          </div>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:6px; font-size:12px;">
+            <span style="color:#4C78A8">● Document</span>
+            <span style="color:#54A24B">● Page</span>
+            <span style="color:#F58518">● Chunk</span>
+            <span style="color:#B279A2">● Concept</span>
+            <span style="color:#E45756">● Final Evidence</span>
+          </div>
+        </div>
+        """,
+        1,
+    )
+    return html, 760
+
+
+def node_style(node_type):
+    if node_type == "query":
+        return "#64748b", "diamond", 24
+    if node_type == "document":
+        return "#4C78A8", "box", 20
+    if node_type == "page":
+        return "#54A24B", "box", 18
+    if node_type == "concept":
+        return "#B279A2", "ellipse", 18
+    if node_type == "seed":
+        return "#F58518", "dot", 20
+    if node_type == "evidence":
+        return "#E45756", "star", 28
+    return "#F58518", "dot", 16
+
+
+def edge_color(relation):
+    return {
+        "seed": "#64748b",
+        "contains": "#94a3b8",
+        "concept": "#B279A2",
+        "same_page": "#2563eb",
+        "same_chapter": "#7c3aed",
+        "adjacent": "#0891b2",
+        "shared_concept": "#16a34a",
+    }.get(relation, "#64748b")
+
+
+def edge_label(relation):
+    return relation if relation in {"seed", "same_page", "adjacent", "shared_concept"} else ""
+
+
+def chunk_hover_title(chunk):
+    concepts = ", ".join(chunk.concepts[:8])
+    text = " ".join(chunk.text.split())[:260]
+    return (
+        f"<b>chunk_id:</b> {html_lib.escape(chunk.chunk_id)}<br>"
+        f"<b>file:</b> {html_lib.escape(chunk.file_name)}<br>"
+        f"<b>page:</b> {chunk.page}<br>"
+        f"<b>concepts:</b> {html_lib.escape(concepts)}<br><br>"
+        f"<b>text:</b> {html_lib.escape(text)}..."
+    )
+
+
+def static_graph_visualization_html(seeds, rows, max_seed_nodes=5, max_expanded_nodes=8, max_edges=14):
     if not rows:
         return "", 0
 
@@ -380,7 +618,9 @@ with tab_qa:
         )
 
         if graph_explanations:
-            graph_html, graph_height = graph_visualization_html(retrieved, graph_explanations)
+            graph_html, graph_height = graph_visualization_html(
+                query, retrieved, graph_explanations, ranked, chunks
+            )
             if graph_html:
                 st.subheader("GraphRAG 节点关系图")
                 components.html(graph_html, height=graph_height, scrolling=True)

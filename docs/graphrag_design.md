@@ -69,13 +69,48 @@ shared_concept   0.40 + 0.10 * 共享知识点数量
 
 如果一个候选 chunk 与多个 seed chunk 有关系，取最高关系组合分数作为 `graph_score`。
 
-## 页面解释
+## 页面解释与可视化
 
-问答页新增两类展示：
+问答页包含三类展示：
 
 ```text
+GraphRAG 节点关系图
 检索与重排序结果
 GraphRAG 扩展解释
+```
+
+`GraphRAG 节点关系图` 使用 PyVis 展示当前问题相关子图，而不是展示全量知识图。
+
+当前问题子图包含：
+
+```text
+Query
+Top-K seed chunks
+GraphRAG 一跳扩展 chunks
+对应 document 节点
+对应 page 节点
+对应 concept 节点
+最终用于回答的 evidence chunks
+```
+
+节点颜色：
+
+```text
+Document       蓝色
+Page           绿色
+Chunk          橙色
+Concept        紫色
+Final Evidence 红色
+Query          灰色
+```
+
+交互能力：
+
+```text
+节点可拖动
+鼠标悬停 chunk 显示 chunk_id、file、page、concepts、前 260 字文本
+边上显示 seed / same_page / adjacent / shared_concept 等关键关系
+红色节点高亮最终证据
 ```
 
 `检索与重排序结果` 会显示：
