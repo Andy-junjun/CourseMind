@@ -2,7 +2,7 @@ import pytest
 
 from src.answer_guard import refusal_message, should_refuse
 from src.generator import answer_question, build_citations, summarize_document
-from src.llm_client import generate_text, get_llm_config
+from src.llm_client import generate_text, get_llm_config, normalize_chat_api_base
 from src.schemas import Chunk, RankedChunk
 
 
@@ -79,6 +79,32 @@ def test_get_llm_config_reads_environment(monkeypatch):
     assert config.model == "test-model"
     assert config.api_base == "https://example.com/chat"
     assert config.timeout == 12
+
+
+def test_deepseek_config_uses_deepseek_key_and_defaults(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "deepseek")
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "deepseek-key")
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
+    monkeypatch.delenv("LLM_API_BASE", raising=False)
+
+    config = get_llm_config()
+
+    assert config.provider == "deepseek"
+    assert config.api_key == "deepseek-key"
+    assert config.model == "deepseek-v4-flash"
+    assert config.api_base == "https://api.deepseek.com/chat/completions"
+
+
+def test_deepseek_base_url_can_be_root_or_v1():
+    assert (
+        normalize_chat_api_base("https://api.deepseek.com", "deepseek")
+        == "https://api.deepseek.com/chat/completions"
+    )
+    assert (
+        normalize_chat_api_base("https://api.deepseek.com/v1", "deepseek")
+        == "https://api.deepseek.com/v1/chat/completions"
+    )
 
 
 def test_answer_question_returns_answer_and_citations(monkeypatch):

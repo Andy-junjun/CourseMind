@@ -36,6 +36,7 @@ def test_expand_with_graph_adds_same_page_candidate():
     assert by_id["c2"].graph_score >= 0.3
     assert by_id["c2"].dense_score == 0.0
     assert by_id["c1"].dense_score == 0.8
+    assert by_id["c1"].graph_score == 1.0
 
 
 def test_expand_with_graph_adds_shared_concept_candidate():

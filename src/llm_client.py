@@ -12,6 +12,8 @@ class LLMConfig:
     model: str
     api_base: str
     timeout: int = 30
+    temperature: float = 0.2
+    max_tokens: int = 1800
 
 
 def generate_text(prompt: str, system_prompt: str | None = None) -> str:
@@ -54,24 +56,46 @@ def generate_mock_text(prompt: str) -> str:
 
 def generate_real_text(prompt: str, system_prompt: str | None = None) -> str:
     config = get_llm_config()
-    if config.provider not in {"openai", "openai_compatible"}:
+    if config.provider not in {"openai", "openai_compatible", "deepseek"}:
         raise ValueError(f"Unsupported LLM_PROVIDER: {config.provider}")
     if not config.api_key:
-        raise RuntimeError("Real LLM mode requires LLM_API_KEY.")
+        key_name = "DEEPSEEK_API_KEY or LLM_API_KEY" if config.provider == "deepseek" else "LLM_API_KEY"
+        raise RuntimeError(f"Real LLM mode requires {key_name}.")
 
     return call_openai_compatible_chat(config, prompt, system_prompt=system_prompt)
 
 
 def get_llm_config() -> LLMConfig:
-    return LLMConfig(
-        provider=os.getenv("LLM_PROVIDER", "mock").strip().lower(),
-        api_key=os.getenv("LLM_API_KEY", "").strip(),
-        model=os.getenv("LLM_MODEL", "gpt-4o-mini").strip(),
-        api_base=os.getenv(
-            "LLM_API_BASE", "https://api.openai.com/v1/chat/completions"
-        ).strip(),
-        timeout=int(os.getenv("LLM_TIMEOUT", "30")),
+    provider = os.getenv("LLM_PROVIDER", "mock").strip().lower()
+    default_model = "deepseek-v4-flash" if provider == "deepseek" else "gpt-4o-mini"
+    default_base = (
+        "https://api.deepseek.com/chat/completions"
+        if provider == "deepseek"
+        else "https://api.openai.com/v1/chat/completions"
     )
+    api_key = os.getenv("LLM_API_KEY", "").strip()
+    if provider == "deepseek":
+        api_key = os.getenv("DEEPSEEK_API_KEY", api_key).strip()
+    return LLMConfig(
+        provider=provider,
+        api_key=api_key,
+        model=os.getenv("LLM_MODEL", default_model).strip() or default_model,
+        api_base=normalize_chat_api_base(os.getenv("LLM_API_BASE", default_base).strip(), provider),
+        timeout=int(os.getenv("LLM_TIMEOUT", "30")),
+        temperature=float(os.getenv("LLM_TEMPERATURE", "0.2")),
+        max_tokens=int(os.getenv("LLM_MAX_TOKENS", "1800")),
+    )
+
+
+def normalize_chat_api_base(api_base: str, provider: str) -> str:
+    base = api_base.rstrip("/")
+    if base.endswith("/chat/completions"):
+        return base
+    if base.endswith("/v1"):
+        return f"{base}/chat/completions"
+    if provider == "deepseek" and base == "https://api.deepseek.com":
+        return f"{base}/chat/completions"
+    return base
 
 
 def call_openai_compatible_chat(
@@ -93,7 +117,8 @@ def call_openai_compatible_chat(
         json={
             "model": config.model,
             "messages": messages,
-            "temperature": 0.2,
+            "temperature": config.temperature,
+            "max_tokens": config.max_tokens,
         },
         timeout=config.timeout,
     )

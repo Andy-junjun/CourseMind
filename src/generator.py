@@ -1,4 +1,5 @@
 from collections import Counter
+import os
 
 from src.llm_client import generate_text
 from src.schemas import Chunk, RankedChunk
@@ -47,9 +48,13 @@ def summarize_document(chunks: list[Chunk]) -> str:
     )
 
 
-def build_evidence_context(evidence: list[RankedChunk], max_chars_per_chunk: int = 500) -> str:
+def build_evidence_context(
+    evidence: list[RankedChunk], max_chars_per_chunk: int | None = None
+) -> str:
     if not evidence:
         return "无可用证据。"
+    if max_chars_per_chunk is None:
+        max_chars_per_chunk = int(os.getenv("ANSWER_MAX_CHARS_PER_CHUNK", "1200"))
     return "\n".join(
         (
             f"[{item.chunk.chunk_id}] 文件={item.chunk.file_name} 页码={item.chunk.page} "

@@ -110,6 +110,24 @@ LLM_PROVIDER=mock
 python scripts/ingest.py
 ```
 
+## 接入 DeepSeek 回答生成
+
+检索、GraphRAG 和 MiniRanker 会先从本地 FAISS 索引中取证据；LLM API 只负责根据这些证据生成长文本回答。要使用 DeepSeek，在 `.env` 中设置：
+
+```text
+COURSEMIND_MODE=real
+LLM_PROVIDER=deepseek
+DEEPSEEK_API_KEY=你的 DeepSeek API Key
+LLM_MODEL=deepseek-v4-flash
+LLM_API_BASE=https://api.deepseek.com/chat/completions
+LLM_TIMEOUT=30
+LLM_TEMPERATURE=0.2
+LLM_MAX_TOKENS=1800
+ANSWER_MAX_CHARS_PER_CHUNK=1200
+```
+
+修改 `.env` 后需要重启 Streamlit。`ANSWER_MAX_CHARS_PER_CHUNK` 控制每个证据片段给大模型的最大文本长度，`LLM_MAX_TOKENS` 控制回答输出长度。
+
 如果机器支持 PyTorch 或 ONNXRuntime，也可以切换：
 
 ```text

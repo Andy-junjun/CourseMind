@@ -58,7 +58,13 @@ def expand_with_graph(
     seed_id_set = set(seed_ids)
 
     selected: dict[str, RetrievedChunk] = {
-        item.chunk.chunk_id: item for item in seed_chunks
+        item.chunk.chunk_id: RetrievedChunk(
+            chunk=item.chunk,
+            dense_score=item.dense_score,
+            bm25_score=item.bm25_score,
+            graph_score=max(item.graph_score, 1.0),
+        )
+        for item in seed_chunks
     }
 
     for chunk in chunks:

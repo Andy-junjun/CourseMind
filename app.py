@@ -902,11 +902,19 @@ with tab_qa:
         if should_refuse(query, ranked):
             st.warning(refusal_message())
         else:
-            result = answer_question(query, ranked)
-            st.subheader("回答")
-            st.write(result["answer"])
-            st.subheader("引用来源")
-            st.dataframe(result["citations"], use_container_width=True)
+            try:
+                result = answer_question(query, ranked)
+            except Exception as exc:
+                st.error(f"回答生成失败：{exc}")
+                st.caption(
+                    "如果使用 DeepSeek，请在 .env 中设置 LLM_PROVIDER=deepseek "
+                    "并填写 DEEPSEEK_API_KEY，然后重启 Streamlit。"
+                )
+            else:
+                st.subheader("回答")
+                st.write(result["answer"])
+                st.subheader("引用来源")
+                st.dataframe(result["citations"], use_container_width=True)
 
         st.subheader("检索与重排序结果")
         st.dataframe(
