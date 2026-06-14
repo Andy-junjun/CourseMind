@@ -1,0 +1,8 @@
+query,expected_file,expected_topic,query_type,answer_keywords
+策略梯度定理中梯度∇θ J(θ)的表达式是什么？,策略梯度_刘书洋.pdf,策略梯度,fact,"""∇θ J(θ);E_π[∇θ log π_θ(a|s) * Q_π(s,a)];策略梯度定理"""
+REINFORCE算法使用什么方法来估计回报G_t？,策略梯度_刘书洋.pdf,策略梯度,fact,"""蒙特卡洛;G_t;无偏;方差大"""
+策略梯度方法相比DQN有什么优点？,策略梯度_刘书洋.pdf,策略梯度,fact,"""连续动作空间;随机策略;直接优化目标"""
+Actor-Critic中的Actor和Critic分别承担什么角色？,Actor-Critic_刘书洋.pdf,Actor-Critic,fact,"""Actor;策略;动作选择;Critic;价值评估;优势函数"""
+A2C和A3C的主要区别是什么？,Actor-Critic_刘书洋.pdf,Actor-Critic,fact,"""同步;异步;多个环境;并行"""
+Actor-Critic和REINFORCE算法在学习方式上有什么不同？,Actor-Critic_刘书洋.pdf,Actor-Critic,compare,"""TD学习;蒙特卡洛;方差小;偏差;Critic"""
+请总结深度学习模型训练中防止过拟合的常见方法,模型参数_刘书洋.pdf,模型参数,summary,"""Dropout;早停;数据增强;正则化;L1;L2"""

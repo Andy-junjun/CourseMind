@@ -1,0 +1,4 @@
+query,expected_file,expected_topic,query_type,answer_keywords,pending_reason
+学习率衰减的常用策略有哪些？,模型训练方法_刘书洋.pptx,模型训练,fact,"""阶梯衰减;指数衰减;余弦退火;ReduceLROnPlateau""",当前 ingest 只支持 PDF/TXT/MD，PPTX 需先转 PDF 或整理成 MD/TXT
+L1正则化和L2正则化有什么区别？,模型训练方法_刘书洋.pptx,模型训练,compare,"""L1;稀疏解;特征选择;L2;权重衰减;非稀疏""",当前 ingest 只支持 PDF/TXT/MD，PPTX 需先转 PDF 或整理成 MD/TXT
+这个资料里有没有讲Transformer的注意力机制？,模型训练方法_刘书洋.pptx,模型训练,out_of_scope,"""""",当前 ingest 只支持 PDF/TXT/MD，PPTX 需先转 PDF 或整理成 MD/TXT
