@@ -1,6 +1,0 @@
-module_name,dataset_name,task_type,data_size,data_format,clean_method,model_type,license
-注意力机制,GLUE-MRPC+CIFAR10,文本分类+图像分类,65801,csv/png,去重/异常过滤/归一化/注意力掩码,Attention/Transformer,Apache 2.0
-自编码器,MNIST+Fashion-MNIST,图像重构/降维,140000,png,去重/降噪/归一化,AE/CAE/VAE,MIT
-GAN,MINST+CelebA,图像生成,272599,jpg/png,强去重/尺寸统一/归一化[-1,1],DCGAN/WGAN,CC BY 4.0
-深度强化学习DRL,OpenAI Gym(CartPole),序列决策,动态交互数据,csv/json,状态标准化/异常轨迹过滤,DRL/Actor-Critic,MIT
-DQN,Atari Breakout,游戏决策,动态帧数据,图像帧,灰度化/缩图/帧堆叠/无效帧过滤,DQN,MIT
