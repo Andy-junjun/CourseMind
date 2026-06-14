@@ -117,65 +117,70 @@ Triplet Loss 让模型学会：
 
 即"正样本要比负样本更近至少一个间隔 margin"。这是度量学习（metric learning）的经典做法。
 
-### 3.3 训练数据与训练记录（已用完整数据训练）
+### 3.3 数据集划分与训练（严格区分 train / test）
 
-代码：[scripts/build_training_pairs.py](../scripts/build_training_pairs.py) 构造训练对，[scripts/train_embedding.py](../scripts/train_embedding.py) 真实 TripletLoss 微调。
+代码：[scripts/split_dataset.py](../scripts/split_dataset.py) 划分、[scripts/build_training_pairs.py](../scripts/build_training_pairs.py) 构造训练对、[scripts/train_embedding.py](../scripts/train_embedding.py) 微调。
 
-**训练数据**（`data/training/embedding_pairs.jsonl`）：
-
-| 项目 | 值 |
-|------|-----|
-| 训练三元组 | **900 条** |
-| 不同 query | **75 个**（课程真实问题） |
-| 每 query 负样本 | 12 个（**hard negative**：同主题但不直接回答该问题的片段） |
-| 主题覆盖 | CNN 120 / Transformer 96 / 反向传播 72 / RNN 60 / 优化器 60 / 神经网络基础 60 / LSTM 48 / GRU 36 / 策略梯度 36 … |
-
-> 说明：900 = 75 个问题 × 每题约 12 个难负样本。汇报时强调"75 个课程问题 + 难负样本采样"，而不是单说 900，更准确也更经得起追问。
-
-**训练记录**（CPU 实跑）：
+**关键方法论：先划分，再训练。** 我们把全部课程问题按 query 维度做 **80/20 不重叠划分**（固定随机种子=42），**只用 train 构造训练对、只用 test 评测**。这一步是为了避免数据泄漏（见 §3.4 的反转故事）。
 
 | 项目 | 值 |
 |------|-----|
-| 基座模型 | BAAI/bge-small-zh-v1.5（输出 512 维，L2 归一化） |
-| 框架 | sentence-transformers 3.0.1 / torch 2.3.1+cpu |
-| 损失 | TripletLoss（度量学习） |
-| 配置 | 900 对、3 epochs、batch=8、warmup=50、共 339 steps |
-| 耗时 | 约 12.5 分钟（756 秒） |
-| train_loss | 基座阶段 ~4.77 → 训练后 **4.50** |
-| 产物 | `models/embedding/finetuned/`（model.safetensors + training_manifest.json，记录 pair_count=900 / epochs=3） |
+| 全部 in-scope query | 197 个（含为补足覆盖、由资料内容自动生成的 74 题） |
+| 训练集 / 测试集 | 158 / 39（80/20，种子固定可复现） |
+| 训练三元组 | 1896 条（仅来自 158 个训练 query × 每题约 12 个负样本） |
+| 基座模型 | BAAI/bge-small-zh-v1.5（512 维，L2 归一化） |
+| 损失 / 配置 | TripletLoss，3 epochs，batch=8，warmup=80，约 32 分钟 |
+| train_loss | 训练后约 4.48 |
 
-### 3.4 检索效果评测：微调真的有效 ✅
+> 说明：1896 = 158 个训练问题 × 每题约 12 个负样本。测试集的 39 个问题**完全没有参与训练**。
+
+### 3.4 检索效果评测：一个值得讲的"反转" ⚠️
 
 代码：[scripts/evaluate_retrieval.py](../scripts/evaluate_retrieval.py)（为每档 spawn 独立子进程，避开 embedder 的 `lru_cache` 串档问题）
-评测集：`data/eval/retrieval_queries-ddw.csv`（18 个带金标文件的检索问题）
+评测集：`data/eval/test_queries.csv`（**39 个独立测试问题，未参与训练**）
 指标：**Recall@K**（金标文件是否进 top-K）、**MRR**（首个命中的倒数排名均值）
 
 | 档位 | Recall@1 | Recall@3 | Recall@5 | MRR |
 |------|:--------:|:--------:|:--------:|:---:|
-| lite（轻量词袋） | 0.2778 | 0.6667 | 0.7222 | 0.4370 |
-| bge-base（原始 BGE） | 0.2778 | 0.6111 | 0.7778 | 0.4648 |
-| **bge-finetuned（微调 BGE）** | **0.4444** | **0.8333** | **1.0000** | **0.6713** |
+| lite（轻量词袋） | 0.6667 | 0.9231 | 0.9487 | 0.7885 |
+| **bge-base（原始 BGE）** | **0.7436** | **0.9744** | **1.0000** | **0.8470** |
+| bge-finetuned（小规模微调） | 0.5897 | 0.7949 | 0.8718 | 0.7030 |
 
-**怎么讲这张表（汇报重点）**：
-- **微调 BGE vs 原始 BGE**：Recall@1 从 0.28 → **0.44（+60%）**，Recall@5 从 0.78 → **1.00（金标 100% 进前 5）**，MRR 从 0.46 → **0.67（+44%）**。这证明用课程训练对做领域微调，**实打实提升了中文检索效果**，不是"只跑通链路"。
-- **为什么 base BGE 没明显赢过 lite**：通用 BGE 没见过我们这门课的术语表达，在小评测集上甚至个别指标略低于 lite；一旦用课程数据微调，立刻全面领先——这恰好说明**领域微调的必要性**。
-- **诚实边界**：评测集是 18 题的小规模、且与训练 query 同源（ddw 资料）。结论可靠但样本偏小，下一步应扩充跨成员的评测集做交叉验证。这个边界主动说，比被问出来好。
+**这张表怎么讲（这是汇报的高光点，不是败笔）**：
+
+1. **先讲我们踩过的坑**：最初我们用全部问题既训练又评测，看到"微调后 Recall@5 从 0.78 冲到 1.00"，一度以为微调大获成功。
+2. **再讲我们如何发现问题**：意识到训练集和测试集重叠 = **数据泄漏（data leakage）**，那个 1.00 其实是"模型在背过的题上考满分"，没有意义。
+3. **严格划分后的真相**：在 39 个**没见过**的问题上，**原始 BGE 才是最好的（Recall@5=1.00、MRR=0.85）**，我们的小规模微调反而把它做差了（MRR 0.85→0.70）。
+4. **给出有深度的结论**：对一个已经在中文检索上很强的基座（BGE-small-zh），**小数据 + TripletLoss + 弱负样本的微调会导致过拟合与表示退化，直接使用基座反而更好**。
+
+**为什么微调会退化（技术归因，答辩可深入）**：
+- **弱负样本**：我们的负样本是"同目录里 BM25 较高的其他片段"，其中很多是**同主题的正确内容**（如另一段也讲 CNN）。TripletLoss 把它们硬推开，破坏了 BGE 原本良好的语义聚类。
+- **小数据过拟合**：158 个训练 query、3 epoch，模型拟合了训练分布的细节，损害泛化。
+- **强基座难超越**：BGE-small-zh 已在大规模中文语料上对比学习过，小规模领域微调的边际收益为负。
+
+**结论的价值**：这个"发现泄漏 → 修正方法论 → 得到反直觉但正确的结论"的过程，本身就是一次合格的实验科学实践，比"我微调涨点了"更有说服力。**汇报时主动讲这个反转**。
 
 **可复现命令**：
 
 ```bash
-# 1. 构造训练对（已生成 data/training/embedding_pairs.jsonl）
-python scripts/build_training_pairs.py --target-count 200 --negatives-per-query 20
-# 2. 微调
-python scripts/train_embedding.py --epochs 3 --batch-size 8 --warmup-steps 50
-# 3. 三档对比评测
+# 1. 按 query 80/20 划分（固定种子，避免泄漏）
+python scripts/split_dataset.py --test-ratio 0.2 --seed 42
+# 2. 只用训练集构造训练对
+python scripts/build_training_pairs.py --queries-file data/eval/train_queries.csv --target-count 2000
+# 3. 微调
+python scripts/train_embedding.py --epochs 3 --batch-size 8 --warmup-steps 80
+# 4. 只在独立测试集上评测三档
 python scripts/evaluate_retrieval.py --all
 ```
 
-**可引用资料（微调 / 度量学习）**：
-- Schroff et al., *FaceNet: A Unified Embedding for Face Recognition and Clustering*, CVPR 2015 —— Triplet Loss 经典来源。
-- Karpukhin et al., *Dense Passage Retrieval for Open-Domain QA (DPR)*, EMNLP 2020 —— 用对比学习训练检索 embedding 的代表作。
-- 博客：Sentence-Transformers Training Overview <https://www.sbert.net/docs/training/overview.html>
+**下一步（若要让微调真正生效）**：换 MultipleNegativesRankingLoss（用 batch 内其他样本作负例，更适合检索）、清洗 hard negative（剔除同主题正确片段）、减到 1 epoch + 更小学习率、或扩充到数千条跨成员训练对。
+
+**可引用资料（微调 / 度量学习 / 数据泄漏）**：
+- Schroff et al., *FaceNet*, CVPR 2015 —— Triplet Loss 经典来源。
+- Karpukhin et al., *Dense Passage Retrieval (DPR)*, EMNLP 2020 —— 对比学习训练检索 embedding；其中 in-batch negatives 的思想即 MultipleNegativesRankingLoss。
+- Henderson et al., *Efficient Natural Language Response Suggestion*, 2017 —— in-batch negative 采样。
+- 关于数据泄漏：Kaufman et al., *Leakage in Data Mining*, KDD 2011。
+- 博客：Sentence-Transformers Training / Losses 文档 <https://www.sbert.net/docs/package_reference/losses.html>
 
 ---
 
@@ -405,7 +410,7 @@ Bandit 决定"考哪个知识点"，出题引擎负责"把这个知识点变成�
 | 这跟直接调 ChatGPT 有什么区别？ | 我们是 RAG：先从课程资料检索证据再生成，答案可溯源、可引用，且不依赖大模型的记忆，资料更新即时生效。 |
 | 为什么用 IndexFlatIP 不用近似索引？ | 课程数据量百级 chunk，精确检索已足够快且结果可复现；数据量上万再换 IVF/HNSW。 |
 | 这里的强化学习是不是太简单？ | 多臂老虎机是强化学习中"无状态转移"的基础模型，UCB1 有严格的 regret 理论界（Auer 2002）。我们用它解决真实的探索-利用问题，并保证了推荐与可执行动作空间一致。 |
-| 你们的 embedding 微调真有提升吗？ | 有，已用 900 条课程训练对（75 问题 × 难负样本）微调并量化验证：微调 BGE 相比原始 BGE，Recall@1 0.28→0.44、Recall@5 0.78→1.00、MRR 0.46→0.67（详见 §3.4）。评测集 18 题、与训练同源，下一步做跨成员交叉验证。 |
+| 你们的 embedding 微调真有提升吗？ | 我们做了诚实的对照实验：在严格划分的独立测试集（39 题，未参与训练）上，**原始 BGE 反而最好（Recall@5=1.00、MRR=0.85），小规模微调因弱负样本+过拟合而退化（MRR 0.70）**。最初"同源评测"看到的 1.00 是数据泄漏假象，我们发现并纠正了它。结论：对强中文基座，直接用比小规模微调更好（详见 §3.4）。 |
 | BM25 是标准实现吗？ | 我们用的是简化的词项重叠召回分（非带 k1/b 的标准 BM25），目的是给稠密检索补一路关键词信号；标准 BM25 是后续可替换项。 |
 
 ---
@@ -438,6 +443,6 @@ Bandit 决定"考哪个知识点"，出题引擎负责"把这个知识点变成�
 
 ## 12. 一页总结（汇报收尾用）
 
-> CourseMind 用**深度学习**解决"听懂中文问题、找对课程证据"——Transformer 句向量（BGE-small-zh）做语义编码，FAISS 做稠密检索，混合 BM25 与 GraphRAG-lite 补召回，再用小型 MLP 做学习排序精排，全程带引用、可拒答；更进一步，我们用 900 条课程训练对对 BGE 做了领域微调，**量化验证 Recall@5 从 0.78 提升到 1.00、MRR 从 0.46 提升到 0.67**。用**强化学习**解决"该复习什么"——把知识点建模为多臂老虎机，用 UCB1 在"练薄弱点"与"探索新点"之间自适应权衡。两条主线都不是玩具：检索链路是工业 RAG 的标准两阶段架构且微调效果经过评测验证，老虎机有严格的理论保证。
+> CourseMind 用**深度学习**解决"听懂中文问题、找对课程证据"——Transformer 句向量（BGE-small-zh）做语义编码，FAISS 做稠密检索，混合 BM25 与 GraphRAG-lite 补召回，再用小型 MLP 做学习排序精排，全程带引用、可拒答。我们还做了一次严谨的微调对照实验：构造 197 题数据集、80/20 划分 train/test，发现并纠正了"同源评测"的数据泄漏，在独立测试集上得出**原始 BGE 检索最强（Recall@5=1.00）、小规模微调反而因弱负样本与过拟合退化**这一反直觉但可信的结论。用**强化学习**解决"该复习什么"——把知识点建模为多臂老虎机，用 UCB1 在"练薄弱点"与"探索新点"之间自适应权衡。两条主线都不是玩具：检索链路是工业 RAG 的标准两阶段架构，老虎机有严格的理论保证，而我们对微调的评估体现了实验科学的严谨性。
 
 > 更完整的全量架构、数据流和 API 契约见 [docs/technical_design.md](technical_design.md)。

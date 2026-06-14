@@ -36,7 +36,7 @@ from src.document_loader import load_pdf  # noqa: E402
 from src.retriever import retrieve  # noqa: E402
 from src.vector_store import build_index, load_chunks  # noqa: E402
 
-DEFAULT_QUERIES = Path("data/eval/retrieval_queries-ddw.csv")
+DEFAULT_QUERIES = Path("data/eval/test_queries.csv")
 DEFAULT_CHUNKS = Path("data/processed/chunks.jsonl")
 RESULT_DIR = Path("data/eval/_runs")
 TOP_KS = (1, 3, 5)

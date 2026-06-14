@@ -6,3 +6,20 @@ Actor-Critic中的Actor和Critic分别承担什么角色？,Actor-Critic_刘书�
 A2C和A3C的主要区别是什么？,Actor-Critic_刘书洋.pdf,Actor-Critic,fact,"""同步;异步;多个环境;并行"""
 Actor-Critic和REINFORCE算法在学习方式上有什么不同？,Actor-Critic_刘书洋.pdf,Actor-Critic,compare,"""TD学习;蒙特卡洛;方差小;偏差;Critic"""
 请总结深度学习模型训练中防止过拟合的常见方法,模型参数_刘书洋.pdf,模型参数,summary,"""Dropout;早停;数据增强;正则化;L1;L2"""
+Actor-Critic算法中，Actor和Critic分别负责什么功能？,Actor-Critic_刘书洋.pdf,Actor-Critic算法基本概念,fact,Actor生成动作;Critic评估表现;策略函数;价值函数;指导动作
+Actor-Critic算法如何改进传统的蒙特卡罗策略梯度算法？,Actor-Critic_刘书洋.pdf,Actor-Critic与策略梯度的关系,compare,用价值函数替代蒙特卡罗法;使用Q网络作为Critic;通用性更强;场景不受限
+在Actor-Critic算法中，Critic网络需要进行哪些参数更新？,Actor-Critic_刘书洋.pdf,Critic网络参数更新,fact,均方误差损失函数;梯度更新;TD误差;网络参数w;反馈和新状态
+列举Actor-Critic算法中Critic的评估点有哪些可选形式？,Actor-Critic_刘书洋.pdf,Actor-Critic算法可选形式,summary,状态价值;动作价值;TD误差;优势函数;TD(λ)误差
+在Actor-Critic算法流程中，如何计算TD误差，以及它用于哪个网络的更新？,Actor-Critic_刘书洋.pdf,TD误差计算,fact,δ=R+γV(S′)−V(S);Critic网络参数更新;反馈R;衰减因子γ;状态价值V
+Actor-Critic算法中为什么需要两个神经网络，它们之间存在什么样的依赖关系？,Actor-Critic_刘书洋.pdf,Actor-Critic架构设计,fact,Actor更新策略参数;Critic更新价值参数;互相依赖;梯度更新;两个网络相互配合
+策略梯度定理的核心内容是什么，它解决了什么问题？,策略梯度_刘书洋.pdf,策略梯度定理,fact,策略梯度定理; 期望累积回报; 最大化; Sutton et al.
+REINFORCE算法为什么会出现高方差问题，这导致了什么样的训练困难？,策略梯度_刘书洋.pdf,REINFORCE算法的高方差问题,fact,蒙特卡洛采样; 高方差; 训练不稳定; 收敛缓慢; 需要大量样本
+在方差降低技术中，基线函数和优势函数各自的作用和区别是什么？,策略梯度_刘书洋.pdf,方差降低技术,compare,基线; 状态值函数; 优势函数; 相对平均水平; 梯度期望
+广义优势估计（GAE）在策略梯度优化中如何平衡偏差和方差？,策略梯度_刘书洋.pdf,广义优势估计,fact,GAE; 偏差; 方差; 平衡; Generalized Advantage Estimation
+TRPO和PPO两种算法的主要区别和各自的优缺点是什么？,策略梯度_刘书洋.pdf,TRPO与PPO比较,compare,TRPO; PPO; 硬约束; 裁剪; 信任域; 近端策略
+PPO算法中的裁剪机制如何改进了TRPO的复杂性问题？,策略梯度_刘书洋.pdf,PPO算法核心思想,fact,PPO-Clip; 裁剪; 简化版本; 复合损失; 目标函数
+在深度学习实验中，如何通过控制变量法来有效地进行超参数实验？,实验结果分析方法_刘书洋.pdf,控制变量法与实验设计,fact,一次只修改一个参数;基准模型;网格搜索或随机搜索;对比分析
+什么是过拟合现象，如何通过观察训练曲线来诊断模型是否出现过拟合？,实验结果分析方法_刘书洋.pdf,模型诊断与过拟合识别,fact,训练损失持续下降;验证损失上升;验证集性能下降;减少网络复杂度;增加正则化
+学习率对深度学习模型训练有什么影响，应该如何调整学习率？,实验结果分析方法_刘书洋.pdf,学习率优化与梯度下降,summary,梯度下降步长;训练稳定性;学习率衰减;余弦退火;learning rate finder方法
+验证集和交叉验证在模型泛化能力评估中分别起到什么作用？,实验结果分析方法_刘书洋.pdf,模型泛化能力与验证方法,compare,验证集;交叉验证;未见过的数据;K折交叉验证;泛化到不同数据子集
+在实验日志与数据管理中，应该如何记录和管理深度学习实验的版本和配置信息？,实验结果分析方法_刘书洋.pdf,实验日志管理与版本控制,fact,超参数配置;模型架构;Git版本控制;Weights & Biases;TensorBoard;数据集分割方式

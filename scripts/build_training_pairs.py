@@ -53,6 +53,41 @@ def find_query_files(eval_dir: Path, raw_dir: Path = DEFAULT_RAW_DIR) -> list[Pa
     return sorted(paths, key=lambda path: path.as_posix())
 
 
+def load_split_queries(path: Path) -> list[RetrievalQuery]:
+    """从 split_dataset.py 产出的 train/test CSV 加载 query（含 source 列）。
+
+    与 load_retrieval_queries 的区别：split 文件已是去重、in-scope 的成品，且不带
+    source_prefix 列时按 expected_file 推断来源目录限制（保持正负样本同源）。
+    """
+    queries: list[RetrievalQuery] = []
+    with path.open("r", encoding="utf-8-sig", newline="") as file:
+        for row in csv.DictReader(file):
+            query = (row.get("query") or "").strip()
+            if not query:
+                continue
+            source = (row.get("source") or "").strip()
+            queries.append(
+                RetrievalQuery(
+                    query=query,
+                    expected_file=(row.get("expected_file") or "").strip(),
+                    expected_topic=(row.get("expected_topic") or "").strip(),
+                    query_type=(row.get("query_type") or "").strip(),
+                    answer_keywords=(row.get("answer_keywords") or "").strip(),
+                    source_file=source or path.as_posix(),
+                    source_prefix=_prefix_from_source(source),
+                )
+            )
+    return queries
+
+
+def _prefix_from_source(source: str) -> str:
+    """从 split 文件的 source 列（如 data/raw/xujiaze/questions.csv）推断成员目录前缀。"""
+    parts = source.replace("\\", "/").split("/")
+    if len(parts) >= 3 and parts[0] == "data" and parts[1] == "raw" and parts[-1] == "questions.csv":
+        return "/".join(parts[2:-1])
+    return ""
+
+
 def load_retrieval_queries(paths: list[Path]) -> list[RetrievalQuery]:
     queries: list[RetrievalQuery] = []
     for path in paths:
@@ -222,6 +257,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--eval-dir", type=Path, default=DEFAULT_EVAL_DIR)
     parser.add_argument("--raw-dir", type=Path, default=DEFAULT_RAW_DIR)
+    parser.add_argument(
+        "--queries-file",
+        type=Path,
+        default=None,
+        help="只从该 CSV（如 data/eval/train_queries.csv）构造训练对，避免训练/测试泄漏。",
+    )
     parser.add_argument("--chunks-path", type=Path, default=DEFAULT_CHUNKS_PATH)
     parser.add_argument("--output-path", type=Path, default=DEFAULT_OUTPUT_PATH)
     parser.add_argument("--target-count", type=int, default=200)
@@ -231,10 +272,19 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    query_files = find_query_files(args.eval_dir, args.raw_dir)
-    if not query_files:
-        raise FileNotFoundError(f"No retrieval_queries*.csv found in {args.eval_dir}")
-    queries = load_retrieval_queries(query_files)
+    if args.queries_file:
+        if not args.queries_file.exists():
+            raise FileNotFoundError(
+                f"{args.queries_file} 不存在。先运行 python scripts/split_dataset.py 生成 train/test 划分。"
+            )
+        queries = load_split_queries(args.queries_file)
+        print(f"Loaded split query file: {args.queries_file.as_posix()} ({len(queries)} queries)")
+    else:
+        query_files = find_query_files(args.eval_dir, args.raw_dir)
+        if not query_files:
+            raise FileNotFoundError(f"No retrieval_queries*.csv found in {args.eval_dir}")
+        queries = load_retrieval_queries(query_files)
+        print(f"Loaded query files: {', '.join(path.as_posix() for path in query_files)}")
     pairs = build_pairs(
         queries,
         chunks_path=args.chunks_path,
@@ -242,7 +292,6 @@ def main() -> None:
         negatives_per_query=args.negatives_per_query,
     )
     save_pairs(pairs, args.output_path)
-    print(f"Loaded query files: {', '.join(path.as_posix() for path in query_files)}")
     print(f"Built {len(pairs)} embedding training pairs")
     print(f"Output: {args.output_path}")
     if len(pairs) < args.target_count:

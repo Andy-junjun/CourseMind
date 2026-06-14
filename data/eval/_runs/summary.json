@@ -2,34 +2,34 @@
   {
     "label": "lite",
     "provider": "lite",
-    "num_queries": 18,
+    "num_queries": 39,
     "recall": {
-      "@1": 0.2778,
-      "@3": 0.6667,
-      "@5": 0.7222
+      "@1": 0.6667,
+      "@3": 0.9231,
+      "@5": 0.9487
     },
-    "mrr": 0.437
+    "mrr": 0.7885
   },
   {
     "label": "bge-base",
     "provider": "sentence_transformers",
-    "num_queries": 18,
+    "num_queries": 39,
     "recall": {
-      "@1": 0.2778,
-      "@3": 0.6111,
-      "@5": 0.7778
+      "@1": 0.7436,
+      "@3": 0.9744,
+      "@5": 1.0
     },
-    "mrr": 0.4648
+    "mrr": 0.847
   },
   {
     "label": "bge-finetuned",
     "provider": "sentence_transformers",
-    "num_queries": 18,
+    "num_queries": 39,
     "recall": {
-      "@1": 0.4444,
-      "@3": 0.8333,
-      "@5": 1.0
+      "@1": 0.5897,
+      "@3": 0.7949,
+      "@5": 0.8718
     },
-    "mrr": 0.6713
+    "mrr": 0.703
   }
 ]

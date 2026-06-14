@@ -2,33 +2,68 @@
   "label": "bge-base",
   "provider": "sentence_transformers",
   "model_path": "BAAI/bge-small-zh-v1.5",
-  "num_queries": 18,
+  "num_queries": 39,
   "recall": {
-    "@1": 0.2778,
-    "@3": 0.6111,
-    "@5": 0.7778
+    "@1": 0.7436,
+    "@3": 0.9744,
+    "@5": 1.0
   },
-  "mrr": 0.4648,
+  "mrr": 0.847,
   "per_query": [
     {
-      "query": "CNN中的卷积核有什么作用？",
-      "expected": "cha5-卷积神经网络.pdf",
-      "rank": 4
+      "query": "贝叶斯优化在超参数搜索中相比网格搜索有什么优势？",
+      "expected": "模型调参_超参数优化方法_陈科宇.md",
+      "rank": 1
     },
     {
-      "query": "什么是池化层？它有哪些类型？",
-      "expected": "cha5-卷积神经网络.pdf",
-      "rank": null
+      "query": "验证集和交叉验证在模型泛化能力评估中分别起到什么作用？",
+      "expected": "实验结果分析方法_刘书洋.pdf",
+      "rank": 1
     },
     {
-      "query": "CNN中的感受野是什么意思？",
+      "query": "卷积可以分为哪三种类型，它们的输出长度有什么区别？",
       "expected": "cha5-卷积神经网络.pdf",
       "rank": 1
     },
     {
-      "query": "步长和填充对CNN输出尺寸有什么影响？",
-      "expected": "cha5-卷积神经网络.pdf",
+      "query": "Adam优化器相比SGD有什么优势？为什么Adam在快速实验中被广泛使用？",
+      "expected": "损失函数与优化器_对比与选择_徐嘉泽.md",
+      "rank": 1
+    },
+    {
+      "query": "网格搜索和随机搜索在超参数优化中各有什么优缺点？",
+      "expected": "模型调参_超参数优化方法_陈科宇.md",
+      "rank": 1
+    },
+    {
+      "query": "LSTM长短期记忆网络中的三个门分别起什么作用？",
+      "expected": "cha6-循环神经网络.pdf",
       "rank": 3
+    },
+    {
+      "query": "为什么 CourseMind 需要 questions.csv 而不只是 raw 资料？",
+      "expected": "训练评估与实验方法_可靠资料整理.md",
+      "rank": 2
+    },
+    {
+      "query": "简单循环网络（SRN）的一个完全连接的循环网络可以近似什么类型的系统？",
+      "expected": "cha6-循环神经网络.pdf",
+      "rank": 1
+    },
+    {
+      "query": "自编码器和PCA在主成分分析上各有什么优劣？",
+      "expected": "自编码器_基本结构与变分自编码器_陈科宇.md",
+      "rank": 1
+    },
+    {
+      "query": "注意力机制中的 Query、Key、Value 分别表示什么？",
+      "expected": "Attention与Transformer_可靠资料整理.md",
+      "rank": 1
+    },
+    {
+      "query": "为什么在卷积神经网络中应用卷积层而不是全连接层？请说明参数减少的原理。",
+      "expected": "cha5-卷积神经网络.pdf",
+      "rank": 1
     },
     {
       "query": "CNN为什么具有平移不变性？",
@@ -36,33 +71,123 @@
       "rank": 2
     },
     {
-      "query": "什么是循环神经网络？",
-      "expected": "cha6-循环神经网络.pdf",
+      "query": "列举Actor-Critic算法中Critic的评估点有哪些可选形式？",
+      "expected": "Actor-Critic_刘书洋.pdf",
       "rank": 1
     },
     {
-      "query": "RNN的隐藏状态是如何更新的？",
-      "expected": "cha6-循环神经网络.pdf",
-      "rank": 1
-    },
-    {
-      "query": "RNN在训练时为什么会出现梯度消失？",
-      "expected": "cha6-循环神经网络.pdf",
-      "rank": null
-    },
-    {
-      "query": "LSTM引入了哪几个门控机制？",
-      "expected": "cha6-循环神经网络.pdf",
+      "query": "过拟合、欠拟合和理想状态下，模型复杂度、训练误差和测试误差分别是什么表现？",
+      "expected": "模型正则化与泛化_实践指南_徐嘉泽.md",
       "rank": 2
     },
     {
-      "query": "LSTM的遗忘门有什么作用？",
-      "expected": "cha6-循环神经网络.pdf",
-      "rank": 4
+      "query": "为什么人工神经元模型中必须包含偏置项？",
+      "expected": "深度学习入门_神经网络结构_徐嘉泽.md",
+      "rank": 1
     },
     {
-      "query": "LSTM如何解决RNN的长期依赖问题？",
+      "query": "GRU（门控循环单元）中重置门的具体作用是什么？",
       "expected": "cha6-循环神经网络.pdf",
+      "rank": 1
+    },
+    {
+      "query": "在实践中，为了追求最佳模型性能，应该如何选择和组合损失函数、优化器和学习率策略？",
+      "expected": "损失函数与优化器_对比与选择_徐嘉泽.md",
+      "rank": 1
+    },
+    {
+      "query": "广义优势估计（GAE）在策略梯度优化中如何平衡偏差和方差？",
+      "expected": "策略梯度_刘书洋.pdf",
+      "rank": 1
+    },
+    {
+      "query": "Dropout的作用是什么？为什么能防止过拟合？",
+      "expected": "过拟合与正则化_方法详解_徐嘉泽.md",
+      "rank": 2
+    },
+    {
+      "query": "神经元模型中 z=w^T x+b 和 a=f(z) 分别表示什么？",
+      "expected": "神经网络与反向传播_可靠资料整理.md",
+      "rank": 2
+    },
+    {
+      "query": "什么是互相关，它与卷积操作有什么关系？",
+      "expected": "cha5-卷积神经网络.pdf",
+      "rank": 1
+    },
+    {
+      "query": "AdamW 与普通 Adam 在权重衰减处理上有什么区别？",
+      "expected": "优化器与训练稳定性_可靠资料整理.md",
+      "rank": 3
+    },
+    {
+      "query": "自编码器的编码器和解码器分别负责什么？",
+      "expected": "自编码器_基本结构与变分自编码器_陈科宇.md",
+      "rank": 1
+    },
+    {
+      "query": "Recall@K 和 MRR 分别衡量什么？",
+      "expected": "训练评估与实验方法_可靠资料整理.md",
+      "rank": 1
+    },
+    {
+      "query": "RNN 如何利用隐藏状态处理序列数据？",
+      "expected": "RNN_LSTM与序列建模_可靠资料整理.md",
+      "rank": 3
+    },
+    {
+      "query": "BERT 类模型和 GPT 类模型的主要区别是什么？",
+      "expected": "Attention与Transformer_可靠资料整理.md",
+      "rank": 1
+    },
+    {
+      "query": "TRPO和PPO两种算法的主要区别和各自的优缺点是什么？",
+      "expected": "策略梯度_刘书洋.pdf",
+      "rank": 1
+    },
+    {
+      "query": "Sigmoid和ReLU激活函数各有什么优缺点？",
+      "expected": "神经网络基础_入门笔记_徐嘉泽.md",
+      "rank": 1
+    },
+    {
+      "query": "F1分数为什么被称为精确率和召回率的调和平均？",
+      "expected": "实验结果分析_评估指标与诊断_陈科宇.md",
+      "rank": 1
+    },
+    {
+      "query": "小数据微调 embedding 有哪些过拟合风险？",
+      "expected": "Embedding语义检索与微调_可靠资料整理.md",
+      "rank": 1
+    },
+    {
+      "query": "L2正则化和L1正则化有什么区别？为什么在深度神经网络中L2更常用？",
+      "expected": "模型正则化与泛化_实践指南_徐嘉泽.md",
+      "rank": 1
+    },
+    {
+      "query": "LSTM 的遗忘门、输入门和输出门分别有什么作用？",
+      "expected": "RNN_LSTM与序列建模_可靠资料整理.md",
+      "rank": 1
+    },
+    {
+      "query": "通用近似定理说明了什么？",
+      "expected": "深度学习入门_神经网络结构_徐嘉泽.md",
+      "rank": 1
+    },
+    {
+      "query": "为什么激活函数必须是非线性的？请用数学角度解释。",
+      "expected": "深度学习入门_神经网络结构_徐嘉泽.md",
+      "rank": 1
+    },
+    {
+      "query": "Actor-Critic算法中为什么需要两个神经网络，它们之间存在什么样的依赖关系？",
+      "expected": "Actor-Critic_刘书洋.pdf",
+      "rank": 1
+    },
+    {
+      "query": "训练过程中 loss 变成 NaN 时应该优先排查哪些因素？",
+      "expected": "优化器与训练稳定性_可靠资料整理.md",
       "rank": 1
     },
     {
@@ -71,34 +196,14 @@
       "rank": 3
     },
     {
-      "query": "GRU中的重置门起什么作用？",
+      "query": "在感知器模型中，权重更新公式是什么？",
+      "expected": "深度学习入门_神经网络结构_徐嘉泽.md",
+      "rank": 5
+    },
+    {
+      "query": "前馈网络与循环神经网络在处理输入依赖关系上有什么根本差异？",
       "expected": "cha6-循环神经网络.pdf",
       "rank": 1
-    },
-    {
-      "query": "什么是自注意力机制？",
-      "expected": "Transformer注意力机制.md",
-      "rank": 2
-    },
-    {
-      "query": "多头注意力的优势是什么？",
-      "expected": "Transformer注意力机制.md",
-      "rank": 2
-    },
-    {
-      "query": "Transformer为什么需要位置编码？",
-      "expected": "Transformer注意力机制.md",
-      "rank": null
-    },
-    {
-      "query": "Transformer与RNN的主要区别是什么？",
-      "expected": "Transformer注意力机制.md",
-      "rank": null
-    },
-    {
-      "query": "这个资料里有没有讲YOLOv10？",
-      "expected": "cha5-卷积神经网络.pdf",
-      "rank": 5
     }
   ]
 }
