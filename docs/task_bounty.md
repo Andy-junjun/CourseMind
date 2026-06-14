@@ -42,7 +42,7 @@ X4 的最终输出必须能作为 X3 的输入。
 
 1. 数据收集和评测集优先级最高。没有数据和问题标注，后面的模型、微调、GraphRAG 都无法证明有效。
 2. fine-tuning 不做“从零训练 BERT”。推荐做 sentence-transformers 风格的 embedding 对比学习微调，或者先做小样本 dry-run。
-3. RAG、FAISS、GraphRAG、MiniRanker、Bandit、OCR、Streamlit 是系统实现技术，不是知识库的数据主题。
+3. RAG、FAISS、GraphRAG、MiniRanker、Bandit、Streamlit 是系统实现技术，不是知识库的数据主题。
 4. 中文出题和 Bandit 推荐适合分给组员，因为容易做出可见 demo 和可验收测试。
 
 ## 数据范围
@@ -77,7 +77,6 @@ FAISS
 GraphRAG
 MiniRanker
 Bandit 推荐
-OCR
 Streamlit
 ```
 
@@ -167,34 +166,6 @@ python scripts/ingest.py
 - 至少准备 50 条检索问题
 - 每条问题必须标注期望文件、页码或知识点
 - 明确哪些资料可以公开提交，哪些只能本地使用
-
-### X2 图像与扫描 PDF OCR 解析
-
-悬赏分：12
-
-负责人：
-协作者：
-
-输入：
-- `data/raw/images/*.png`
-- 扫描版 PDF
-
-输出：
-- OCR 后的 `DocumentPage`
-- OCR 结果缓存
-- OCR 解析说明
-
-涉及文件：
-- `src/document_loader.py`
-- `src/ocr_loader.py`
-- `tests/test_ocr_loader.py`
-- `docs/image_ocr_pipeline.md`
-
-验收标准：
-- 能解析至少 3 张中文截图或扫描页
-- OCR 输出包含 `file_name`、`page`、`text`
-- 普通文本 PDF 仍走原来的 PyMuPDF 流程
-- OCR 缺依赖时不能影响普通 PDF/TXT/MD 解析
 
 ### X3 本地中文 Transformer Embedding 部署与 FAISS 入库
 
@@ -407,7 +378,6 @@ python scripts/ingest.py
 6. X6 中文出题质量升级
 7. X7 Bandit 复习推荐升级
 8. X5 GraphRAG 图结构优化
-9. X2 图像与扫描 PDF OCR 解析
 
 ## 给负责人的判断标准
 

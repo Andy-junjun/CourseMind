@@ -1,7 +1,16 @@
 from src.chunker import chunk_pages
 from src.document_loader import load_pdf
 from src.graph_store import expand_with_graph
-from src.miniranker import build_feature_matrix, rerank
+import pytest
+
+from src.miniranker import (
+    build_feature_matrix,
+    build_torch_model,
+    calibrated_score,
+    content_quality_factor,
+    load_ranker_model,
+    rerank,
+)
 from src.retriever import retrieve
 from src.schemas import Chunk, RetrievedChunk
 
@@ -55,6 +64,21 @@ def test_rerank_works_without_miniranker_model(monkeypatch):
     assert all(0.0 <= item.ranker_score <= 1.0 for item in ranked)
 
 
+def test_load_ranker_model_uses_torch_weights_when_available(monkeypatch, tmp_path):
+    torch = pytest.importorskip("torch")
+    model_path = tmp_path / "miniranker.pt"
+    model = build_torch_model()
+    torch.save(model.state_dict(), model_path)
+
+    monkeypatch.setenv("COURSEMIND_MODE", "real")
+    monkeypatch.setenv("MINIRANKER_MODEL_PATH", str(model_path))
+
+    loaded = load_ranker_model()
+
+    assert loaded is not None
+    assert len(loaded.predict_scores([[0.5, 0.2, 0.1, 1.0, 0.0, 0.7]])) == 1
+
+
 def test_rerank_respects_top_k_and_empty_inputs():
     candidates = [
         RetrievedChunk(chunk=make_chunk("c1", "RAG"), dense_score=0.8, bm25_score=0.5),
@@ -64,6 +88,44 @@ def test_rerank_respects_top_k_and_empty_inputs():
     assert len(rerank("query", candidates, top_k=1)) == 1
     assert rerank("query", candidates, top_k=0) == []
     assert rerank("query", [], top_k=5) == []
+
+
+def test_miniranker_downweights_title_only_chunks(monkeypatch):
+    monkeypatch.setenv("COURSEMIND_MODE", "mock")
+    title = RetrievedChunk(
+        chunk=make_chunk("title", "## 一、神经网络基础"),
+        dense_score=0.5,
+        bm25_score=0.4,
+        graph_score=1.0,
+    )
+    evidence = RetrievedChunk(
+        chunk=make_chunk("evidence", "激活函数会引入非线性，使多层神经网络能够表示复杂函数。"),
+        dense_score=0.45,
+        bm25_score=0.35,
+        graph_score=0.8,
+    )
+
+    ranked = rerank("激活函数有什么作用？", [title, evidence], top_k=2)
+
+    assert content_quality_factor(title) < content_quality_factor(evidence)
+    assert ranked[0].chunk.chunk_id == "evidence"
+
+
+def test_calibrated_score_keeps_dense_relevance_in_final_rank():
+    relevant = RetrievedChunk(
+        chunk=make_chunk("relevant", "激活函数用于引入非线性。"),
+        dense_score=0.8,
+        bm25_score=0.55,
+        graph_score=1.0,
+    )
+    broad = RetrievedChunk(
+        chunk=make_chunk("broad", "神经网络资料。"),
+        dense_score=0.6,
+        bm25_score=0.55,
+        graph_score=1.0,
+    )
+
+    assert calibrated_score(relevant, 0.78) > calibrated_score(broad, 0.87)
 
 
 def test_miniranker_pipeline_with_real_course_pdf(monkeypatch):
@@ -78,4 +140,3 @@ def test_miniranker_pipeline_with_real_course_pdf(monkeypatch):
     assert len(ranked) == 3
     assert ranked[0].ranker_score >= ranked[-1].ranker_score
     assert all(item.chunk.chunk_id for item in ranked)
-

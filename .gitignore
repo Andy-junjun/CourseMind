@@ -21,3 +21,5 @@ models/embedding/*
 *.pkl
 *.index
 streamlit*.log
+!data/training/miniranker.pt
+!data/training/miniranker_manifest.json

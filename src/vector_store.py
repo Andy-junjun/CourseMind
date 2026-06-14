@@ -24,6 +24,40 @@ class FaissVectorIndex:
 VectorIndex = FaissVectorIndex
 
 
+def extend_index(index: VectorIndex, new_chunks: list[Chunk]) -> VectorIndex:
+    """Embed only ``new_chunks`` and append them to an existing FAISS index.
+
+    The already-indexed chunks are not re-embedded, so importing a file costs one
+    embedding pass over the new file rather than over the whole knowledge base.
+    Chunk ids already present in the index are skipped to keep ids unique.
+    """
+    if not new_chunks:
+        return index
+
+    existing_ids = set(index.chunk_ids)
+    fresh = [chunk for chunk in new_chunks if chunk.chunk_id not in existing_ids]
+    if not fresh:
+        return index
+
+    vectors = embed_chunks(fresh)
+    if index.dim and vectors.shape[1] != index.dim:
+        raise ValueError(
+            f"Embedding dim mismatch: index has dim {index.dim} but new chunks "
+            f"produced dim {vectors.shape[1]}. Rebuild the index with the same "
+            "EMBEDDING_PROVIDER/model used to create it."
+        )
+    # Clone before adding so the source index (often a cached, shared object) is
+    # not mutated in place. extend_index must be pure with respect to its input.
+    faiss = import_faiss()
+    merged = faiss.clone_index(index.index)
+    merged.add(vectors)
+    return FaissVectorIndex(
+        index=merged,
+        chunk_ids=index.chunk_ids + [chunk.chunk_id for chunk in fresh],
+        dim=index.dim or int(vectors.shape[1]),
+    )
+
+
 def build_index(chunks: list[Chunk]) -> VectorIndex:
     vectors = embed_chunks(chunks)
     dim = int(vectors.shape[1]) if len(vectors) else 0

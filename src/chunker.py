@@ -1,28 +1,10 @@
 import re
 
+from src.keyword_extractor import extract_keywords
 from src.schemas import Chunk, DocumentPage
 
 
 DEFAULT_CONCEPT = "通用知识点"
-
-CONCEPT_ALIASES: dict[str, list[str]] = {
-    "深度学习": ["深度学习", "神经网络", "CNN", "RNN", "LSTM", "GRU", "DRL"],
-    "Transformer": ["Transformer", "注意力机制", "self-attention", "attention"],
-    "文本嵌入": ["文本嵌入", "Embedding", "embedding", "向量表示"],
-    "RAG": ["RAG", "检索增强生成", "Retrieval Augmented Generation"],
-    "向量检索": ["向量检索", "语义检索", "dense retrieval", "FAISS", "向量数据库"],
-    "BM25": ["BM25", "关键词检索", "稀疏检索"],
-    "GraphRAG": ["GraphRAG", "GraphRAG-lite", "知识图谱", "图扩展", "图检索"],
-    "MiniRanker": ["MiniRanker", "重排序", "rerank", "reranker", "神经重排序"],
-    "Bandit": ["Bandit", "多臂老虎机", "UCB", "epsilon-greedy", "ε-greedy"],
-    "强化学习": ["强化学习", "reinforcement learning", "RL", "DRL"],
-    "大语言模型": ["大语言模型", "LLM", "语言模型", "Ollama", "OpenAI"],
-    "自动出题": ["自动出题", "生成题目", "选择题", "Quiz"],
-    "原文引用": ["原文引用", "引用来源", "citation", "citations"],
-    "拒答机制": ["拒答机制", "拒答", "资料外问题", "证据不足"],
-    "评分标准": ["评分标准", "评分项", "满分", "占比"],
-    "成员贡献": ["成员贡献", "贡献清单", "分工", "团队分工"],
-}
 
 HEADING_PATTERNS = [
     re.compile(r"^第[一二三四五六七八九十百千万0-9]+[章节部分篇][：:、\s]?.*"),
@@ -35,15 +17,7 @@ SENTENCE_PATTERN = re.compile(r"[^。！？!?；;]+[。！？!?；;]?")
 
 
 def infer_concepts(text: str) -> list[str]:
-    compact_text = re.sub(r"\s+", "", text).lower()
-    lower_text = text.lower()
-    concepts: list[str] = []
-
-    for concept, aliases in CONCEPT_ALIASES.items():
-        if any(_contains_alias(lower_text, compact_text, alias) for alias in aliases):
-            concepts.append(concept)
-
-    return concepts or [DEFAULT_CONCEPT]
+    return extract_keywords(text) or [DEFAULT_CONCEPT]
 
 
 def chunk_pages(
@@ -165,12 +139,6 @@ def normalize_spaces(text: str) -> str:
 
 def safe_id(file_name: str) -> str:
     return "".join(ch.lower() if ch.isalnum() else "_" for ch in file_name).strip("_")
-
-
-def _contains_alias(lower_text: str, compact_text: str, alias: str) -> bool:
-    lower_alias = alias.lower()
-    compact_alias = re.sub(r"\s+", "", lower_alias)
-    return lower_alias in lower_text or compact_alias in compact_text
 
 
 def _overlap_prefix(previous: str, overlap: int, sentence: str) -> str:

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from collections import Counter
 from typing import Any
 
 from src.chunker import DEFAULT_CONCEPT
@@ -10,6 +11,7 @@ SAME_CHAPTER_SCORE = 0.20
 ADJACENT_CHUNK_SCORE = 0.25
 SHARED_CONCEPT_BASE_SCORE = 0.40
 SHARED_CONCEPT_EXTRA_SCORE = 0.10
+MAX_GRAPH_SCORE = 1.0
 
 
 @dataclass(frozen=True)
@@ -54,6 +56,7 @@ def expand_with_graph(
 
     chunk_by_id = {chunk.chunk_id: chunk for chunk in chunks}
     chunk_positions = {chunk.chunk_id: index for index, chunk in enumerate(chunks)}
+    concept_counts = count_concepts(chunks)
     seed_ids = [item.chunk.chunk_id for item in seed_chunks]
     seed_id_set = set(seed_ids)
 
@@ -62,7 +65,7 @@ def expand_with_graph(
             chunk=item.chunk,
             dense_score=item.dense_score,
             bm25_score=item.bm25_score,
-            graph_score=max(item.graph_score, 1.0),
+            graph_score=MAX_GRAPH_SCORE,
         )
         for item in seed_chunks
     }
@@ -76,6 +79,8 @@ def expand_with_graph(
             seed_ids=seed_ids,
             chunk_by_id=chunk_by_id,
             chunk_positions=chunk_positions,
+            concept_counts=concept_counts,
+            total_chunks=len(chunks),
             hops=hops,
         )
         if graph_score > 0:
@@ -195,6 +200,8 @@ def score_graph_relation(
     chunk_by_id: dict[str, Chunk],
     chunk_positions: dict[str, int],
     hops: int,
+    concept_counts: Counter[str] | None = None,
+    total_chunks: int | None = None,
 ) -> float:
     score = 0.0
 
@@ -206,12 +213,12 @@ def score_graph_relation(
         relation_score = sum(
             relation.score
             for relation in explain_candidate_seed_relation(
-                candidate, seed, chunk_positions, hops
+                candidate, seed, chunk_positions, hops, concept_counts, total_chunks
             )
         )
         score = max(score, relation_score)
 
-    return round(score, 6)
+    return round(min(score, MAX_GRAPH_SCORE), 6)
 
 
 def explain_graph_expansion(
@@ -221,6 +228,7 @@ def explain_graph_expansion(
     hops: int = 1,
 ) -> list[GraphRelation]:
     chunk_positions = {chunk.chunk_id: index for index, chunk in enumerate(chunks)}
+    concept_counts = count_concepts(chunks)
     relations: list[GraphRelation] = []
     for seed_item in seed_chunks:
         relations.extend(
@@ -229,6 +237,8 @@ def explain_graph_expansion(
                 seed_item.chunk,
                 chunk_positions,
                 hops,
+                concept_counts,
+                len(chunks),
             )
         )
     return sorted(
@@ -242,6 +252,8 @@ def explain_candidate_seed_relation(
     seed: Chunk,
     chunk_positions: dict[str, int],
     hops: int,
+    concept_counts: Counter[str] | None = None,
+    total_chunks: int | None = None,
 ) -> list[GraphRelation]:
     relations: list[GraphRelation] = []
     if candidate.chunk_id == seed.chunk_id:
@@ -289,7 +301,7 @@ def explain_candidate_seed_relation(
             )
         )
 
-    shared_concepts = concept_overlap(candidate, seed)
+    shared_concepts = concept_overlap(candidate, seed, concept_counts, total_chunks)
     if shared_concepts:
         score = SHARED_CONCEPT_BASE_SCORE + SHARED_CONCEPT_EXTRA_SCORE * len(shared_concepts)
         relations.append(
@@ -329,12 +341,46 @@ def is_adjacent(
     return 0 < abs(candidate_pos - seed_pos) <= hops
 
 
-def concept_overlap(candidate: Chunk, seed: Chunk) -> set[str]:
+def concept_overlap(
+    candidate: Chunk,
+    seed: Chunk,
+    concept_counts: Counter[str] | None = None,
+    total_chunks: int | None = None,
+) -> set[str]:
     candidate_concepts = {
-        concept for concept in candidate.concepts if concept != DEFAULT_CONCEPT
+        concept
+        for concept in candidate.concepts
+        if is_graph_concept(concept, concept_counts, total_chunks)
     }
-    seed_concepts = {concept for concept in seed.concepts if concept != DEFAULT_CONCEPT}
+    seed_concepts = {
+        concept
+        for concept in seed.concepts
+        if is_graph_concept(concept, concept_counts, total_chunks)
+    }
     return candidate_concepts.intersection(seed_concepts)
+
+
+def count_concepts(chunks: list[Chunk]) -> Counter[str]:
+    counts: Counter[str] = Counter()
+    for chunk in chunks:
+        counts.update(set(chunk.concepts))
+    return counts
+
+
+def is_graph_concept(
+    concept: str,
+    concept_counts: Counter[str] | None = None,
+    total_chunks: int | None = None,
+) -> bool:
+    if concept == DEFAULT_CONCEPT or len(concept.strip()) < 2:
+        return False
+    if not concept_counts or not total_chunks:
+        return True
+    if len(concept) <= 2:
+        max_count = max(4, int(total_chunks * 0.015))
+    else:
+        max_count = max(8, int(total_chunks * 0.06))
+    return concept_counts.get(concept, 0) <= max_count
 
 
 def sort_expanded_results(

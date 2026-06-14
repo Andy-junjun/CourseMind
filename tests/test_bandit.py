@@ -10,6 +10,7 @@ from src.bandit_recommender import (
     load_state,
     recommend_concept,
     record_quiz_result,
+    reset_bandit_state,
     save_state,
     get_all_status,
 )
@@ -164,3 +165,65 @@ def test_bandit_get_all_status(tmp_path, monkeypatch):
     assert summary["total_wrong"] == 1
     assert "RNN" in summary["concepts"]
     assert summary["concepts"]["RNN"]["wrong_rate"] == 1.0
+
+
+def test_bandit_reset_clears_answer_history(tmp_path, monkeypatch):
+    state_path = tmp_path / "quiz_state.json"
+    monkeypatch.setenv("BANDIT_STATE_PATH", str(state_path))
+    quiz = QuizItem(
+        question="Q", options=["A", "B"], answer="A",
+        explanation="E", concept="Transformer", source_chunk_id="c1",
+    )
+
+    record_quiz_result(quiz, is_wrong=True)
+    reset_bandit_state()
+
+    state = load_state()
+    assert state["total_attempts"] == 0
+    assert state["concepts"]["Transformer"]["attempts"] == 0
+    assert state["concepts"]["Transformer"]["wrong"] == 0
+    assert state["concepts"]["Transformer"]["last_seen"] is None
+    assert state["concepts"]["Transformer"]["source_chunk_ids"] == []
+
+
+def test_recommendation_restricted_to_quizzable_concepts(tmp_path, monkeypatch):
+    """Regression: the recommended concept must be one the quiz can actually use.
+
+    Previously Bandit could recommend a concept that generate_quiz could not
+    produce a question for, so the practice tab silently fell back to an
+    unrelated concept and the "推荐复习" and the quiz disagreed.
+    """
+    from src.study_tools import quizzable_concepts, generate_quiz
+
+    state_path = tmp_path / "quiz_state.json"
+    monkeypatch.setenv("BANDIT_STATE_PATH", str(state_path))
+
+    chunks = [
+        Chunk(chunk_id="c1", file_name="a.md", page=1,
+              text="激活函数会引入非线性，使神经网络能够学习复杂的关系。",
+              concepts=["激活函数", "神经网络"]),
+        Chunk(chunk_id="c2", file_name="a.md", page=1,
+              text="梯度下降通过沿负梯度方向更新参数来减小损失函数。",
+              concepts=["梯度下降", "损失函数"]),
+        Chunk(chunk_id="c3", file_name="a.md", page=1,
+              text="卷积层用于提取局部特征，池化层可以减少特征图的尺寸。",
+              concepts=["卷积层", "池化层"]),
+    ]
+    quizzable = quizzable_concepts(chunks)
+    assert quizzable, "fixture should yield at least one quizzable concept"
+
+    lookup = {c.chunk_id: c for c in chunks}
+    # Seed an out-of-scope concept that has no quizzable statement; without the
+    # allowed_concepts guard UCB would happily recommend it (never seen).
+    record_quiz_result(
+        QuizItem(question="Q", options=["A", "B"], answer="A", explanation="E",
+                 concept="深度强化学习", source_chunk_id="missing"),
+        is_wrong=True,
+    )
+
+    rec = recommend_concept(chunk_lookup=lookup, allowed_concepts=quizzable)
+    assert rec["concept"] in quizzable
+
+    quiz = generate_quiz(chunks, num_questions=30, target_concept=rec["concept"])
+    assert quiz, "recommended concept must be able to produce a quiz"
+    assert all(item.concept == rec["concept"] for item in quiz)

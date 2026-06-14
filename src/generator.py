@@ -5,23 +5,66 @@ from src.llm_client import generate_text
 from src.schemas import Chunk, RankedChunk
 
 
-def answer_question(query: str, evidence: list[RankedChunk]) -> dict:
+def answer_question(
+    query: str,
+    evidence: list[RankedChunk],
+    *,
+    allow_fallback: bool = False,
+) -> dict:
     context = build_evidence_context(evidence)
     prompt = (
         "请只根据下面的课程资料证据回答问题。"
         "如果证据不足，请说明无法基于当前资料可靠回答。\n\n"
         f"问题：{query}\n\n证据：\n{context}"
     )
-    answer = generate_text(
-        prompt,
-        system_prompt="你是 CourseMind 的中文课程资料问答助手，回答必须基于证据并保留引用。",
-    )
+    fallback_error = None
+    try:
+        answer = generate_text(
+            prompt,
+            system_prompt="你是 CourseMind 的中文课程资料问答助手，回答必须基于证据并保留引用。",
+        )
+    except Exception as exc:
+        if not allow_fallback:
+            raise
+        fallback_error = str(exc)
+        answer = build_local_evidence_answer(query, evidence, fallback_error)
     citations = build_citations(evidence)
-    return {
+    result = {
         "answer": answer,
         "citations": citations,
         "evidence_count": len(evidence),
     }
+    if fallback_error:
+        result["fallback_error"] = fallback_error
+    return result
+
+
+def build_local_evidence_answer(
+    query: str,
+    evidence: list[RankedChunk],
+    error: str | None = None,
+) -> str:
+    if not evidence:
+        return "当前没有可用证据，无法基于知识库回答该问题。"
+
+    lines = [
+        "DeepSeek / LLM API 当前不可用，下面先给出基于本地检索证据的临时回答。",
+        f"问题：{query}",
+        "",
+        "最相关证据：",
+    ]
+    for index, item in enumerate(evidence[:3], start=1):
+        text = " ".join(item.chunk.text.split())
+        if len(text) > 220:
+            text = text[:217] + "..."
+        lines.append(
+            f"{index}. {text} "
+            f"（来源：{item.chunk.file_name} 第 {item.chunk.page} 页，"
+            f"chunk_id={item.chunk.chunk_id}，ranker={item.ranker_score:.3f}）"
+        )
+    if error:
+        lines.extend(["", f"API 错误：{error[:240]}"])
+    return "\n".join(lines)
 
 
 def summarize_document(chunks: list[Chunk]) -> str:

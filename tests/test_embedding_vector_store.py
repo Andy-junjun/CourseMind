@@ -5,6 +5,7 @@ from src.schemas import DocumentPage
 from src.vector_store import (
     build_index,
     cosine,
+    extend_index,
     load_vector_store,
     persist_vector_store,
     search_index,
@@ -94,5 +95,80 @@ def test_retrieve_exposes_dense_and_bm25_scores(monkeypatch):
     assert isinstance(results[0].bm25_score, float)
 
 
+def test_faiss_inner_product_matches_cosine_for_normalized_embeddings(monkeypatch):
+    monkeypatch.setenv("COURSEMIND_MODE", "real")
+    monkeypatch.setenv("EMBEDDING_PROVIDER", "lite")
+    monkeypatch.setenv("EMBEDDING_DIM", "384")
+    chunks = chunk_pages(
+        [
+            DocumentPage(file_name="course.md", page=1, text="Transformer attention uses query key value vectors."),
+            DocumentPage(file_name="course.md", page=2, text="Batch normalization stabilizes training."),
+        ]
+    )
+    query = "query key value attention"
+
+    index = build_index(chunks)
+    results = search_index(query, chunks, top_k=1, index=index)
+    expected = cosine(embed_text(query), embed_text(results[0][0].text))
+
+    assert -1.0 <= results[0][1] <= 1.0
+    assert abs(results[0][1] - expected) < 1e-5
+
+
 def test_cosine_handles_empty_vectors():
     assert cosine([], []) == 0.0
+
+
+def test_extend_index_merges_new_file_without_touching_base(monkeypatch):
+    """Importing a file embeds only the new chunks and merges them in.
+
+    The original index must stay searchable and must not be mutated in place
+    (build_knowledge_base caches the base index and reuses it across uploads).
+    """
+    monkeypatch.setenv("COURSEMIND_MODE", "mock")
+    base_chunks = chunk_pages(
+        [DocumentPage(file_name="base.md", page=1, text="RAG 检索增强生成根据课程资料回答问题。")]
+    )
+    new_chunks = chunk_pages(
+        [DocumentPage(file_name="upload.md", page=1, text="Transformer 使用自注意力机制处理序列。")]
+    )
+
+    base = build_index(base_chunks)
+    base_total_before = base.index.ntotal
+    base_ids_before = list(base.chunk_ids)
+
+    merged = extend_index(base, new_chunks)
+
+    # base is untouched (purity)
+    assert base.index.ntotal == base_total_before
+    assert base.chunk_ids == base_ids_before
+    # merged has both
+    assert merged.index.ntotal == len(base_chunks) + len(new_chunks)
+    assert merged.chunk_ids == base.chunk_ids + [c.chunk_id for c in new_chunks]
+
+    # uploaded content is now searchable
+    all_chunks = base_chunks + new_chunks
+    hits = search_index("自注意力机制是什么", all_chunks, top_k=1, index=merged)
+    assert hits[0][0].file_name == "upload.md"
+
+
+def test_extend_index_skips_duplicate_chunk_ids(monkeypatch):
+    monkeypatch.setenv("COURSEMIND_MODE", "mock")
+    chunks = chunk_pages(
+        [DocumentPage(file_name="base.md", page=1, text="向量数据库使用 FAISS 保存 embedding。")]
+    )
+    base = build_index(chunks)
+
+    # re-extending with the same chunks is a no-op (idempotent)
+    merged = extend_index(base, chunks)
+    assert merged.index.ntotal == len(chunks)
+    assert merged.chunk_ids == base.chunk_ids
+
+
+def test_extend_index_empty_new_chunks_returns_same(monkeypatch):
+    monkeypatch.setenv("COURSEMIND_MODE", "mock")
+    chunks = chunk_pages(
+        [DocumentPage(file_name="base.md", page=1, text="评分标准包括技术深度与演示效果。")]
+    )
+    base = build_index(chunks)
+    assert extend_index(base, []) is base

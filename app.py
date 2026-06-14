@@ -6,23 +6,30 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from src.answer_guard import refusal_message, should_refuse
-from src.bandit_recommender import recommend_concept, update_feedback
+from src.bandit_recommender import (
+    get_all_status,
+    recommend_concept,
+    record_quiz_result,
+    reset_bandit_state,
+)
 from src.chunker import chunk_pages
 from src.config import get_mode
 from src.document_loader import load_pdf
-from src.generator import answer_question, summarize_document
+from src.generator import answer_question
 from src.graph_store import expand_with_graph, explain_graph_expansion
 from src.miniranker import rerank
 from src.retriever import retrieve
 from src.schemas import DocumentPage
-from src.study_tools import generate_quiz
-from src.vector_store import build_index, load_vector_store, vector_store_exists
+from src.study_tools import generate_quiz, quizzable_concepts
+from src.ui_formatters import citation_rows, graph_summary_rows, retrieval_rows
+from src.vector_store import build_index, extend_index, load_vector_store, vector_store_exists
 
 
 st.set_page_config(page_title="CourseMind", layout="wide")
 
 RAW_DIR = Path("data/raw")
 RAW_DIR.mkdir(parents=True, exist_ok=True)
+PRACTICE_STATE_VERSION = 2
 
 
 def default_pages() -> list[DocumentPage]:
@@ -33,7 +40,7 @@ def default_pages() -> list[DocumentPage]:
             text=(
                 "CourseMind 是一个面向中文课程资料的智能学习助手。"
                 "系统支持 PDF 解析、中文 Chunk 切分、RAG 检索、原文引用、"
-                "文档总结、自动出题和复习推荐。检索阶段结合向量检索、"
+                "概念理解练习和复习推荐。检索阶段结合向量检索、"
                 "BM25 关键词检索和 GraphRAG-lite 图扩展。MiniRanker 会综合 "
                 "dense_score、bm25_score、graph_score、同页奖励、同章节奖励和文本特征，"
                 "对候选片段重新排序。Bandit 模块根据学生答题反馈推荐薄弱知识点。"
@@ -43,13 +50,8 @@ def default_pages() -> list[DocumentPage]:
 
 
 @st.cache_resource(show_spinner=False)
-def build_knowledge_base(file_path: str | None):
-    if file_path:
-        pages = load_pdf(file_path)
-        chunks = chunk_pages(pages)
-        index = build_index(chunks)
-        return pages, chunks, index, "上传文件临时索引"
-
+def base_knowledge_base():
+    """Load the persistent knowledge base once (without any uploaded files)."""
     if vector_store_exists():
         chunks, index = load_vector_store()
         pages = pages_from_chunks(chunks)
@@ -59,6 +61,27 @@ def build_knowledge_base(file_path: str | None):
     chunks = chunk_pages(pages)
     index = build_index(chunks)
     return pages, chunks, index, "内置示例"
+
+
+@st.cache_resource(show_spinner=False)
+def build_knowledge_base(file_path: str | None):
+    base_pages, base_chunks, base_index, base_source = base_knowledge_base()
+    if not file_path:
+        return base_pages, base_chunks, base_index, base_source
+
+    # Embed only the uploaded file and merge it into the existing KB, so the
+    # original materials stay searchable and we don't re-run embedding over the
+    # whole knowledge base.
+    new_pages = load_pdf(file_path)
+    new_chunks = chunk_pages(new_pages)
+    merged_index = extend_index(base_index, new_chunks)
+    merged_pages = base_pages + new_pages
+    merged_chunks = base_chunks + [
+        chunk for chunk in new_chunks
+        if chunk.chunk_id not in {c.chunk_id for c in base_chunks}
+    ]
+    source = f"{base_source} + 上传文件（{Path(file_path).name}）"
+    return merged_pages, merged_chunks, merged_index, source
 
 
 def pages_from_chunks(chunks):
@@ -90,11 +113,6 @@ def graph_expansion_rows(expanded, seeds, chunks, seed_ids):
                 }
             )
     return rows
-
-
-def graph_reason(chunk_id, rows):
-    reasons = [row["原因"] for row in rows if row["扩展chunk"] == chunk_id]
-    return "；".join(reasons[:3])
 
 
 def graph_visualization_html(query, seeds, rows, ranked, chunks):
@@ -870,9 +888,44 @@ def short_label(value, max_length=24):
     return text if len(text) <= max_length else text[: max_length - 1] + "…"
 
 
+def next_practice_quiz(chunks, target_concept=None, exclude_chunk_ids=None):
+    exclude_chunk_ids = set(exclude_chunk_ids or [])
+    quiz_items = generate_quiz(
+        chunks,
+        num_questions=30,
+        target_concept=target_concept,
+    )
+    for item in quiz_items:
+        if item.source_chunk_id not in exclude_chunk_ids:
+            return item
+    # All fresh chunks for this concept are exhausted this round. Recycle within
+    # the SAME concept instead of silently jumping to an unrelated one, so the
+    # question always matches the recommended concept shown in the UI.
+    if exclude_chunk_ids and quiz_items:
+        return quiz_items[0]
+    if target_concept and not quiz_items:
+        # The recommended concept genuinely cannot produce a question; fall back
+        # to any concept so the user is never stuck with an empty quiz.
+        quiz_items = generate_quiz(chunks, num_questions=30)
+        for item in quiz_items:
+            if item.source_chunk_id not in exclude_chunk_ids:
+                return item
+    return quiz_items[0] if quiz_items else None
+
+
+def reset_practice_state(chunks, target_concept, focus_recommended):
+    st.session_state.practice_seen_chunk_ids = []
+    st.session_state.practice_quiz = next_practice_quiz(chunks, target_concept)
+    st.session_state.practice_focus = focus_recommended
+    st.session_state.practice_feedback = None
+    st.session_state.practice_round = st.session_state.get("practice_round", 0) + 1
+    st.session_state.practice_state_version = PRACTICE_STATE_VERSION
+
+
 st.sidebar.title("CourseMind")
 st.sidebar.caption(f"运行模式：{get_mode()}")
 uploaded = st.sidebar.file_uploader("上传课程 PDF 或文本", type=["pdf", "txt", "md"])
+st.sidebar.caption("上传后只对新文件做 embedding，并并入现有知识库（不会重跑全部资料，也不会替换原知识库）。")
 
 file_path = None
 if uploaded:
@@ -885,8 +938,8 @@ st.sidebar.metric("页数", len(pages))
 st.sidebar.metric("Chunks", len(chunks))
 st.sidebar.caption(f"数据来源：{data_source}")
 
-tab_qa, tab_summary, tab_quiz, tab_review, tab_status = st.tabs(
-    ["问答", "总结", "出题", "复习", "状态"]
+tab_qa, tab_practice, tab_status = st.tabs(
+    ["问答", "练习与复习", "状态"]
 )
 
 with tab_qa:
@@ -903,7 +956,7 @@ with tab_qa:
             st.warning(refusal_message())
         else:
             try:
-                result = answer_question(query, ranked)
+                result = answer_question(query, ranked, allow_fallback=True)
             except Exception as exc:
                 st.error(f"回答生成失败：{exc}")
                 st.caption(
@@ -911,31 +964,19 @@ with tab_qa:
                     "并填写 DEEPSEEK_API_KEY，然后重启 Streamlit。"
                 )
             else:
+                if result.get("fallback_error"):
+                    st.warning("LLM API 暂时不可用，已切换为本地证据回答。")
                 st.subheader("回答")
                 st.write(result["answer"])
-                st.subheader("引用来源")
-                st.dataframe(result["citations"], use_container_width=True)
 
-        st.subheader("检索与重排序结果")
-        st.dataframe(
-            [
-                {
-                    "rank": i + 1,
-                    "来源": "原始检索" if item.chunk.chunk_id in seed_ids else "GraphRAG扩展",
-                    "chunk_id": item.chunk.chunk_id,
-                    "文件": item.chunk.file_name,
-                    "页码": item.chunk.page,
-                    "dense": round(item.dense_score, 3),
-                    "bm25": round(item.bm25_score, 3),
-                    "graph": round(item.graph_score, 3),
-                    "ranker": round(item.ranker_score, 3),
-                    "GraphRAG原因": graph_reason(item.chunk.chunk_id, graph_explanations),
-                    "文本": item.chunk.text[:120],
-                }
-                for i, item in enumerate(ranked)
-            ],
-            use_container_width=True,
-        )
+        st.subheader("最终证据来源")
+        st.dataframe(citation_rows(ranked), use_container_width=True)
+
+        with st.expander("查看检索与重排序明细", expanded=False):
+            st.dataframe(
+                retrieval_rows(ranked, seed_ids, graph_explanations),
+                use_container_width=True,
+            )
 
         if graph_explanations:
             graph_html, graph_height = graph_visualization_html(
@@ -945,33 +986,116 @@ with tab_qa:
                 st.subheader("GraphRAG 节点关系图")
                 components.html(graph_html, height=graph_height, scrolling=True)
             st.subheader("GraphRAG 扩展解释")
-            st.dataframe(graph_explanations, use_container_width=True)
+            st.dataframe(graph_summary_rows(graph_explanations), use_container_width=True)
+            with st.expander("查看原始 GraphRAG 关系", expanded=False):
+                st.dataframe(graph_explanations, use_container_width=True)
 
-with tab_summary:
-    if st.button("生成总结"):
-        st.write(summarize_document(chunks))
+with tab_practice:
+    chunk_lookup = {chunk.chunk_id: chunk for chunk in chunks}
+    quizzable = quizzable_concepts(chunks)
+    focus_recommended = st.checkbox("围绕推荐知识点出题", value=True)
+    reset_practice_data = st.button(
+        "重置答题数据和强化学习状态",
+        help="清空所有答题次数、错误次数和 Bandit 推荐历史，让复习推荐回到初始探索状态。",
+    )
+    if reset_practice_data:
+        reset_bandit_state(chunk_lookup=chunk_lookup)
 
-with tab_quiz:
-    num_questions = st.slider("题目数量", 1, 5, 3)
-    quiz_items = generate_quiz(chunks, num_questions=num_questions)
-    for idx, item in enumerate(quiz_items, start=1):
-        st.markdown(f"**Q{idx}. {item.question}**")
-        choice = st.radio("请选择", item.options, key=f"quiz_{idx}")
-        correct = choice == item.answer
+    rec = recommend_concept(chunk_lookup=chunk_lookup, allowed_concepts=quizzable)
+    summary = get_all_status()
+    target_concept = rec["concept"] if focus_recommended else None
+
+    if (
+        reset_practice_data
+        or "practice_quiz" not in st.session_state
+        or st.session_state.get("practice_focus") != focus_recommended
+        or st.session_state.get("practice_state_version") != PRACTICE_STATE_VERSION
+    ):
+        reset_practice_state(chunks, target_concept, focus_recommended)
+        if reset_practice_data:
+            st.success("答题数据和强化学习状态已重置。")
+    if "practice_seen_chunk_ids" not in st.session_state:
+        st.session_state.practice_seen_chunk_ids = []
+
+    st.subheader("概念理解练习")
+    cols = st.columns(4)
+    cols[0].metric("推荐复习", rec["concept"])
+    cols[1].metric("UCB 分数", f"{rec['score']:.3f}")
+    cols[2].metric("总答题数", summary["total_attempts"])
+    cols[3].metric("总错误数", summary["total_wrong"])
+    st.caption(rec["reason"])
+
+    if st.session_state.practice_feedback:
+        feedback = st.session_state.practice_feedback
+        if feedback["correct"]:
+            st.success("上一题回答正确。")
+        else:
+            st.error("上一题回答错误。")
+        st.markdown(f"**正确答案：** {feedback['answer']}")
+        st.write(feedback["explanation"])
+        st.caption(
+            f"已记录到 Bandit：知识点 {feedback['concept']}，"
+            f"当前推荐已根据本次反馈重新计算。"
+        )
+
+    item = st.session_state.practice_quiz
+    if item is None:
+        st.warning("当前知识库还没有足够的概念句子生成练习题。")
+    else:
+        st.markdown(f"**{item.question}**")
+        choice = st.radio(
+            "选择答案",
+            item.options,
+            key=f"practice_choice_{st.session_state.practice_round}",
+        )
+        st.caption(
+            f"知识点：{item.concept} | 来源：{item.source_chunk_id} | "
+            f"本轮已练习 {len(st.session_state.practice_seen_chunk_ids)} 个片段"
+        )
+
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("提交", key=f"submit_{idx}"):
-                update_feedback(item.concept, correct)
-                st.success("回答正确" if correct else f"回答错误。正确答案：{item.answer}")
+            if st.button("提交并生成下一题", type="primary"):
+                correct = choice == item.answer
+                record_quiz_result(item, is_wrong=not correct)
+                updated_rec = recommend_concept(
+                    chunk_lookup=chunk_lookup, allowed_concepts=quizzable
+                )
+                updated_target = updated_rec["concept"] if focus_recommended else None
+                st.session_state.practice_feedback = {
+                    "correct": correct,
+                    "answer": item.answer,
+                    "explanation": item.explanation,
+                    "concept": item.concept,
+                }
+                seen_chunk_ids = list(st.session_state.practice_seen_chunk_ids)
+                if item.source_chunk_id not in seen_chunk_ids:
+                    seen_chunk_ids.append(item.source_chunk_id)
+                st.session_state.practice_seen_chunk_ids = seen_chunk_ids[-80:]
+                st.session_state.practice_quiz = next_practice_quiz(
+                    chunks,
+                    updated_target,
+                    exclude_chunk_ids=st.session_state.practice_seen_chunk_ids,
+                )
+                st.session_state.practice_round = st.session_state.get("practice_round", 0) + 1
+                st.rerun()
         with col2:
-            st.caption(f"知识点：{item.concept} | 来源：{item.source_chunk_id}")
-        st.write(item.explanation)
+            if st.button("跳过并换一题"):
+                seen_chunk_ids = list(st.session_state.practice_seen_chunk_ids)
+                if item.source_chunk_id not in seen_chunk_ids:
+                    seen_chunk_ids.append(item.source_chunk_id)
+                st.session_state.practice_seen_chunk_ids = seen_chunk_ids[-80:]
+                st.session_state.practice_quiz = next_practice_quiz(
+                    chunks,
+                    target_concept,
+                    exclude_chunk_ids=st.session_state.practice_seen_chunk_ids,
+                )
+                st.session_state.practice_feedback = None
+                st.session_state.practice_round = st.session_state.get("practice_round", 0) + 1
+                st.rerun()
 
-with tab_review:
-    rec = recommend_concept()
-    st.metric("推荐复习知识点", rec["concept"])
-    st.write(rec["reason"])
-    st.json(rec)
+    with st.expander("查看复习推荐状态", expanded=False):
+        st.json(rec)
 
 with tab_status:
     st.subheader("系统状态")

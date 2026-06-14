@@ -1,0 +1,1 @@
+CourseMind uses PDF parsing, chunking, RAG retrieval, MiniRanker, GraphRAG-lite, and Bandit review recommendation. Transformer embeddings map course chunks and user questions into a semantic space. MiniRanker combines dense score, BM25 score, graph score, same-page bonus, same-chapter bonus, and chunk length features.

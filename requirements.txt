@@ -9,6 +9,5 @@ numpy>=1.26,<2
 # Optional real-mode dependencies. Install only when the corresponding module is used.
 # sentence-transformers>=3.0
 # fastembed>=0.8
-# pytesseract>=0.3
 # rank-bm25>=0.2
 # torch>=2.0

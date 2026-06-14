@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from src.ocr_loader import merge_text_and_ocr, ocr_pdf_page
 from src.schemas import DocumentPage
 
 
@@ -45,19 +44,11 @@ def _load_pdf_pages(path: Path) -> list[DocumentPage]:
             for index, page in enumerate(doc):
                 page_number = index + 1
                 text_layer = page.get_text("text").strip()
-                image_count = len(page.get_images(full=True))
-                ocr_text = ocr_pdf_page(
-                    page,
-                    file_path=path,
-                    page_number=page_number,
-                    text_layer=text_layer,
-                    image_count=image_count,
-                )
                 pages.append(
                     DocumentPage(
                         file_name=path.name,
                         page=page_number,
-                        text=merge_text_and_ocr(text_layer, ocr_text),
+                        text=text_layer,
                     )
                 )
     except Exception as exc:
