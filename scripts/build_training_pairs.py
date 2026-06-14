@@ -49,7 +49,7 @@ def find_query_files(eval_dir: Path, raw_dir: Path = DEFAULT_RAW_DIR) -> list[Pa
     if eval_dir.exists():
         paths.extend(eval_dir.glob("retrieval_queries*.csv"))
     if raw_dir.exists():
-        paths.extend(raw_dir.glob("*/questions.csv"))
+        paths.extend(raw_dir.rglob("questions.csv"))
     return sorted(paths, key=lambda path: path.as_posix())
 
 
@@ -176,7 +176,7 @@ def infer_source_prefix(path: Path) -> str:
     if len(parts) >= 3 and parts[-1].lower() == "questions.csv":
         for index in range(len(parts) - 2):
             if parts[index] == "data" and parts[index + 1] == "raw":
-                return parts[index + 2]
+                return Path(*parts[index + 2 : -1]).as_posix()
     return ""
 
 

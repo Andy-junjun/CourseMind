@@ -4,6 +4,8 @@ import types
 
 from scripts.build_training_pairs import (
     build_pairs,
+    find_query_files,
+    infer_source_prefix,
     load_retrieval_queries,
     save_pairs,
 )
@@ -89,6 +91,28 @@ def test_build_training_pairs_from_retrieval_queries(tmp_path):
     assert len(pairs) == 2
     assert all(pair.positive_file == "cnn.md" for pair in pairs)
     assert all(pair.negative_file != "cnn.md" for pair in pairs)
+
+
+def test_find_query_files_recurses_nested_raw_dirs(tmp_path):
+    eval_dir = tmp_path / "data" / "eval"
+    raw_dir = tmp_path / "data" / "raw"
+    nested = raw_dir / "public" / "deep_learning_core"
+    nested.mkdir(parents=True)
+    eval_dir.mkdir(parents=True)
+    (nested / "questions.csv").write_text(
+        "query,expected_file,expected_topic,query_type,answer_keywords\n",
+        encoding="utf-8",
+    )
+    (eval_dir / "retrieval_queries_demo.csv").write_text(
+        "query,expected_file,expected_topic,query_type,answer_keywords\n",
+        encoding="utf-8",
+    )
+
+    paths = find_query_files(eval_dir, raw_dir)
+
+    assert eval_dir / "retrieval_queries_demo.csv" in paths
+    assert nested / "questions.csv" in paths
+    assert infer_source_prefix(nested / "questions.csv") == "public/deep_learning_core"
 
 
 def test_training_pairs_save_and_dry_run(tmp_path):

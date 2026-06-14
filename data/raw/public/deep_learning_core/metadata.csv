@@ -1,0 +1,9 @@
+file_name,title,source,type,topic,can_commit,notes
+神经网络与反向传播_可靠资料整理.md,神经网络与反向传播,公开可靠资料中文改写,markdown,神经网络基础;反向传播,yes,基于 Deep Learning Book、MIT 6.S191、PyTorch Autograd 教程整理
+优化器与训练稳定性_可靠资料整理.md,优化器与训练稳定性,公开可靠资料中文改写,markdown,优化器;训练稳定性,yes,基于 Deep Learning Book、Adam 论文、PyTorch Optim 文档整理
+正则化泛化与归一化_可靠资料整理.md,正则化泛化与归一化,公开可靠资料中文改写,markdown,正则化;泛化;BatchNorm;Dropout,yes,基于 Deep Learning Book、Dropout 论文、BatchNorm 论文整理
+CNN卷积神经网络_可靠资料整理.md,CNN 卷积神经网络,公开可靠资料中文改写,markdown,CNN;卷积神经网络,yes,基于 Stanford CS231n、Deep Learning Book、PyTorch CIFAR10 教程整理
+RNN_LSTM与序列建模_可靠资料整理.md,RNN、LSTM 与序列建模,公开可靠资料中文改写,markdown,RNN;LSTM;GRU;序列建模,yes,基于 Deep Learning Book、CS231n RNN 笔记、PyTorch 序列模型教程整理
+Attention与Transformer_可靠资料整理.md,Attention 与 Transformer,公开可靠资料中文改写,markdown,Transformer;Attention;自注意力,yes,基于 Attention Is All You Need、Annotated Transformer、Hugging Face 文档整理
+Embedding语义检索与微调_可靠资料整理.md,Embedding 语义检索与微调,公开可靠资料中文改写,markdown,Embedding;语义检索;微调;FAISS,yes,基于 Hugging Face、Sentence-Transformers、FAISS 文档整理
+训练评估与实验方法_可靠资料整理.md,训练评估与实验方法,公开可靠资料中文改写,markdown,训练评估;Recall@K;MRR;消融实验,yes,基于 Deep Learning Book、PyTorch 教程、信息检索评估方法整理
