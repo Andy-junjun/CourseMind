@@ -856,3 +856,95 @@ python -m pytest
 - 新增数据必须尽量补充 `metadata.csv` 和 `questions.csv`。
 - real 模式能力要有 mock fallback，保证测试稳定。
 - 页面演示功能必须能解释“分数从哪里来、证据从哪里来、关系为什么成立”。
+
+## 26. 部署与资源占用（含低配服务器方案）
+
+### 26.1 各运行模式的真实内存占用（本机实测）
+
+下面是用 psutil 实测的常驻内存（RSS），用于判断能否塞进低配机器：
+
+| 场景 | 是否加载 torch | 进程 RSS | 说明 |
+|------|:---:|:---:|------|
+| lite 检索核心（load_chunks + build_index + search） | 否 | **~205 MB** | 仅 numpy + faiss + jieba |
+| BGE 微调模型加载 + 编码 | 是 | **~440 MB** | torch CPU + sentence-transformers，未含 Streamlit |
+| Streamlit 运行时（额外叠加） | — | 约 +150~250 MB | 取决于版本与组件 |
+
+推算整套服务：
+
+- **lite + Streamlit ≈ 400~500 MB** —— 2GB 服务器稳。
+- **BGE + Streamlit ≈ 700MB~1GB（且 ingest 批量编码时峰值更高）** —— 2GB 服务器有 OOM 风险，需加 swap 且不能并发。
+
+> 关键结论：`lite` 提供方完全不 import torch（见 [src/embedder.py](../src/embedder.py) 的 `lite_embed_text`），这是它能跑在 2GB 机器上的根本原因。
+
+### 26.2 推荐部署策略：本地为主，线上为辅
+
+课堂展示用教室电脑，不要把 2GB 服务器放进演示关键路径（OOM、公网延迟都会让现场翻车）。建议：
+
+| 用途 | 跑在哪 | 配置 | 理由 |
+|------|------|------|------|
+| 课堂现场演示（主力） | 教室电脑本地 | 可用 BGE 微调模型（教室机内存通常 ≥8G） | 完全可控、零网络依赖、效果最好 |
+| 线上可访问 Demo（彩蛋） | 2GB 阿里云 / 免费托管 | **lite + DeepSeek API** | 课后可访问，体现“真部署了” |
+
+> 注意 §3.4 的实验结论：在独立测试集上原始 BGE 检索更强、微调反而退化。因此本地演示用 BGE **基座**（`EMBEDDING_PROVIDER=sentence_transformers`、不指定 `EMBEDDING_MODEL_PATH`）即可，不必非用微调权重。
+
+### 26.3 “打包送过去”到底打包什么
+
+很多人第一反应是把 92MB 的 BGE 微调权重传到服务器——**这恰恰是 2GB 机器扛不住的东西**。正确的打包清单是：
+
+1. **代码**：`git clone` 仓库即可（已干净，无大文件）。
+2. **预构建索引**（强烈建议）：在本地用 lite 跑一次 `python scripts/ingest.py`，把生成的
+   `data/processed/chunks.jsonl`、`data/indexes/faiss.index`、`data/indexes/faiss.meta.json`
+   一起 `scp` 到服务器。这样服务器**不需要构建索引**（构建时的批量编码是内存峰值来源）。
+   注意：索引必须用与线上**同一种 embedding 提供方**构建——lite 部署就用 lite 构建，维度才对得上。
+3. **依赖**：服务器只装 `requirements.txt`（轻量集，无 torch），**不要**装 `requirements-transformer.txt`。
+4. **不要打包**：`models/embedding/finetuned/`（92MB 权重）、`.venv`、日志、`__pycache__`。
+
+### 26.4 阿里云 2GB 部署步骤（lite + DeepSeek）
+
+```bash
+# 1. 克隆 + 轻量依赖（不装 torch）
+git clone <repo> && cd CourseMind
+python -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+
+# 2. 上传本地用 lite 预构建好的索引（在本机执行 scp）
+#    scp data/processed/chunks.jsonl data/indexes/faiss.index data/indexes/faiss.meta.json user@server:~/CourseMind/<对应路径>
+
+# 3. .env：lite 检索 + DeepSeek 生成
+cat > .env <<'EOF'
+COURSEMIND_MODE=real
+EMBEDDING_PROVIDER=lite
+EMBEDDING_DIM=384
+LLM_PROVIDER=deepseek
+DEEPSEEK_API_KEY=你的Key
+LLM_API_BASE=https://api.deepseek.com/chat/completions
+BANDIT_STATE_PATH=data/processed/quiz_state.json
+EOF
+
+# 4. 加一点 swap 兜底（2GB 机器的保险，几乎零成本）
+sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
+sudo mkswap /swapfile && sudo swapon /swapfile
+
+# 5. 启动（单进程，关闭多余功能省内存）
+python -m streamlit run app.py --server.port 8501 --server.address 0.0.0.0 \
+  --server.headless true --browser.gatherUsageStats false
+```
+
+> 安全提醒：`--server.address 0.0.0.0` 会把服务暴露到公网且**无鉴权**。仅用于临时演示；演示后关闭，或用阿里云安全组只放行你需要的来源 IP，避免被公网扫描滥用。DeepSeek Key 放 `.env`（已被 .gitignore 忽略），不要写进代码或提交。
+
+### 26.5 更省心的免费托管（替代自建服务器）
+
+如果只是想给老师/同学一个“能点开的链接”，比维护 2GB 阿里云更省事：
+
+- **Streamlit Community Cloud**（share.streamlit.io）：连 GitHub 仓库自动部署，免费。配 lite + DeepSeek API（在平台的 Secrets 里填 Key）。
+- **Hugging Face Spaces**（Streamlit 模板）：同样免费、给公开链接。
+
+两者都用 lite 模式，不占你自己的内存，且天然有 HTTPS。
+
+### 26.6 低配避坑清单
+
+- 用 lite 时**不要**装 `requirements-transformer.txt`，否则白白占盘和内存。
+- 服务器**不要**跑 `ingest.py` 现场构建大索引——本地建好上传。
+- Streamlit 加 `--server.headless true`，避免它尝试开浏览器。
+- 加 2G swap 作为 OOM 兜底，成本几乎为零。
+- 演示链路别依赖公网服务器；线上 demo 只作“课后可访问”的加分项。

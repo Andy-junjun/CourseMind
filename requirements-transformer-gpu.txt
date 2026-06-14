@@ -1,0 +1,19 @@
+# GPU (CUDA) 版 transformer 依赖 —— 用于 RTX 3090 等带 GPU 的服务器。
+# 与 requirements-transformer.txt（CPU 版）的唯一区别：torch 用 CUDA 构建，
+# 让 sentence-transformers 自动走 GPU，BGE 编码与微调提速数十倍。
+#
+# 安装：
+#   pip install -r requirements.txt
+#   pip install -r requirements-transformer-gpu.txt
+#
+# 注：cu121 适配 CUDA 12.1 运行时（3090 通用）。若服务器 CUDA 版本不同，
+# 把下面的 cu121 改成对应版本（如 cu118），或参考 https://pytorch.org/get-started/locally/
+
+--extra-index-url https://download.pytorch.org/whl/cu121
+
+numpy==1.26.4
+torch==2.3.1
+transformers==4.44.2
+sentence-transformers==3.0.1
+datasets==2.20.0
+accelerate==0.34.2
