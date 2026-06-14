@@ -1,6 +1,11 @@
 import pytest
 
-from src.graph_store import build_document_graph, expand_with_graph, explain_graph_expansion
+from src.graph_store import (
+    build_document_graph,
+    expand_with_graph,
+    explain_graph_expansion,
+    score_graph_relation,
+)
 from src.schemas import Chunk, RetrievedChunk
 
 
@@ -126,3 +131,41 @@ def test_explain_graph_expansion_lists_relation_reasons():
         "shared_concept",
     }
     assert any("共享知识点" in relation.reason for relation in relations)
+
+
+def test_graph_relation_score_is_capped_to_one():
+    chunks = [
+        make_chunk("c1", 1, "Transformer attention seed", "chapter", ["Transformer"]),
+        make_chunk("c2", 1, "Transformer attention neighbor", "chapter", ["Transformer"]),
+    ]
+    positions = {chunk.chunk_id: index for index, chunk in enumerate(chunks)}
+
+    score = score_graph_relation(
+        candidate=chunks[1],
+        seed_ids=["c1"],
+        chunk_by_id={chunk.chunk_id: chunk for chunk in chunks},
+        chunk_positions=positions,
+        hops=1,
+    )
+
+    assert score == 1.0
+
+
+def test_graph_shared_concept_ignores_overly_common_concepts():
+    chunks = [
+        make_chunk(f"c{i}", i, f"内容 {i}", None, ["深度学习"])
+        for i in range(1, 11)
+    ]
+    positions = {chunk.chunk_id: index for index, chunk in enumerate(chunks)}
+
+    score = score_graph_relation(
+        candidate=chunks[1],
+        seed_ids=["c1"],
+        chunk_by_id={chunk.chunk_id: chunk for chunk in chunks},
+        chunk_positions=positions,
+        concept_counts={"深度学习": len(chunks)},
+        total_chunks=len(chunks),
+        hops=0,
+    )
+
+    assert score == 0.0

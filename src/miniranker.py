@@ -1,5 +1,6 @@
 import math
 import os
+import re
 from pathlib import Path
 from typing import Protocol
 
@@ -21,7 +22,11 @@ def rerank(query: str, candidates: list[RetrievedChunk], top_k: int = 5) -> list
 
     features = build_feature_matrix(candidates)
     model = load_ranker_model()
-    scores = model.predict_scores(features) if model else heuristic_scores(features)
+    raw_scores = model.predict_scores(features) if model else heuristic_scores(features)
+    scores = [
+        calibrated_score(item, score)
+        for item, score in zip(candidates, raw_scores)
+    ]
 
     ranked = [
         RankedChunk(
@@ -79,26 +84,36 @@ def load_ranker_model() -> RankerModel | None:
     return TorchMiniRankerModel(model_path)
 
 
+def build_torch_model():
+    try:
+        from torch import nn
+    except ImportError as exc:
+        if get_mode() == "real":
+            raise RuntimeError("MiniRanker real mode requires PyTorch.") from exc
+        raise
+
+    return nn.Sequential(
+        nn.Linear(6, 32),
+        nn.ReLU(),
+        nn.Dropout(0.1),
+        nn.Linear(32, 16),
+        nn.ReLU(),
+        nn.Linear(16, 1),
+        nn.Sigmoid(),
+    )
+
+
 class TorchMiniRankerModel:
     def __init__(self, model_path: Path):
         try:
             import torch
-            from torch import nn
         except ImportError as exc:
             if get_mode() == "real":
                 raise RuntimeError("MiniRanker real mode requires PyTorch.") from exc
             raise
 
         self.torch = torch
-        self.model = nn.Sequential(
-            nn.Linear(6, 32),
-            nn.ReLU(),
-            nn.Dropout(0.1),
-            nn.Linear(32, 16),
-            nn.ReLU(),
-            nn.Linear(16, 1),
-            nn.Sigmoid(),
-        )
+        self.model = build_torch_model()
         state = torch.load(model_path, map_location="cpu")
         self.model.load_state_dict(state)
         self.model.eval()
@@ -125,10 +140,30 @@ def chunk_length_norm(item: RetrievedChunk, target_length: int = 400) -> float:
     return min(length, target_length) / target_length
 
 
+def content_quality_factor(item: RetrievedChunk) -> float:
+    """Down-weight chunks that are too short to be useful as answer evidence."""
+    text = item.chunk.text.strip()
+    compact = re.sub(r"[\s#*`_\-–—>]+", "", text)
+    if len(compact) < 20:
+        return 0.35
+    if text.startswith("#") and len(compact) < 60:
+        return 0.55
+    return 1.0
+
+
+def calibrated_score(item: RetrievedChunk, model_score: float) -> float:
+    blended = (
+        0.45 * clip01(model_score)
+        + 0.35 * clip01(item.dense_score)
+        + 0.15 * clip01(item.bm25_score)
+        + 0.05 * clip01(item.graph_score)
+    )
+    return clip01(blended * content_quality_factor(item))
+
+
 def clip01(value: float) -> float:
     return max(0.0, min(1.0, float(value)))
 
 
 def sigmoid(value: float) -> float:
     return 1.0 / (1.0 + math.exp(-value))
-

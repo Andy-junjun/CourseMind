@@ -48,7 +48,6 @@ FAISS
 GraphRAG
 MiniRanker
 Bandit 推荐
-OCR
 Streamlit
 ```
 

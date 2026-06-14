@@ -3,7 +3,7 @@ import math
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Iterable, Optional
 
 if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -13,9 +13,9 @@ from src.schemas import Chunk, QuizItem
 
 
 DEFAULT_CONCEPTS = [
-    "Transformer", "RAG", "MiniRanker", "GraphRAG",
-    "Bandit", "大语言模型", "反向传播", "梯度下降",
-    "注意力机制", "CNN", "RNN"
+    "神经网络", "反向传播", "梯度下降", "损失函数",
+    "CNN", "RNN", "LSTM", "Transformer",
+    "注意力机制", "自编码器", "GAN", "深度强化学习"
 ]
 
 
@@ -23,6 +23,10 @@ def load_state(path: Path | None = None) -> dict:
     path = path or get_bandit_state_path()
     if path.exists():
         return json.loads(path.read_text(encoding="utf-8"))
+    return initial_state()
+
+
+def initial_state() -> dict:
     return {
         "concepts": {
             concept: {"attempts": 0, "wrong": 0, "last_seen": None, "source_chunk_ids": []}
@@ -36,6 +40,17 @@ def save_state(state: dict, path: Path | None = None) -> None:
     path = path or get_bandit_state_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def reset_bandit_state(
+    path: Path | None = None,
+    chunk_lookup: Optional[Dict[str, Chunk]] = None,
+) -> dict:
+    state = initial_state()
+    if chunk_lookup:
+        add_chunk_concepts_to_state(state, chunk_lookup)
+    save_state(state, path=path)
+    return state
 
 
 def record_quiz_result(quiz_item: QuizItem, is_wrong: bool) -> None:
@@ -85,13 +100,30 @@ def _generate_reason(stats: dict, score: float) -> str:
     return "；".join(reasons) + " → 建议优先复习"
 
 
-def recommend_concept(chunk_lookup: Optional[Dict[str, Chunk]] = None) -> dict:
+def recommend_concept(
+    chunk_lookup: Optional[Dict[str, Chunk]] = None,
+    allowed_concepts: Optional[Iterable[str]] = None,
+) -> dict:
+    """Recommend the next concept to review.
+
+    When ``allowed_concepts`` is provided, the recommendation is restricted to
+    that set. The practice tab passes the concepts that can actually produce a
+    quiz question, so the recommended concept always matches the question that
+    gets generated next (otherwise Bandit could recommend a concept that has no
+    quizzable statement and the quiz would silently fall back to an unrelated
+    concept).
+    """
     state = load_state()
+    if chunk_lookup:
+        add_chunk_concepts_to_state(state, chunk_lookup)
     total_attempts = state.get("total_attempts", 0)
+    allowed = set(allowed_concepts) if allowed_concepts is not None else None
     best_concept = None
     best_score = -1.0
     all_scores = {}
     for concept, stats in state["concepts"].items():
+        if allowed is not None and concept not in allowed:
+            continue
         score = _ucb_score(stats, total_attempts)
         all_scores[concept] = round(score, 4)
         if score > best_score:
@@ -106,6 +138,8 @@ def recommend_concept(chunk_lookup: Optional[Dict[str, Chunk]] = None) -> dict:
         for chunk_id in best_stats.get("source_chunk_ids", [])[-3:]:
             if chunk_id in chunk_lookup:
                 source_chunks.append(chunk_lookup[chunk_id])
+        if not source_chunks:
+            source_chunks = chunks_for_concept(best_concept, chunk_lookup, limit=3)
     return {
         "concept": best_concept,
         "score": round(best_score, 4) if best_score != float('inf') else float('inf'),
@@ -115,6 +149,37 @@ def recommend_concept(chunk_lookup: Optional[Dict[str, Chunk]] = None) -> dict:
         "source_chunks": source_chunks,
         "all_scores": all_scores,
     }
+
+
+def add_chunk_concepts_to_state(state: dict, chunk_lookup: Dict[str, Chunk]) -> None:
+    concepts = state.setdefault("concepts", {})
+    for chunk in chunk_lookup.values():
+        for concept in chunk.concepts:
+            if not is_recommendable_concept(concept):
+                continue
+            concepts.setdefault(
+                concept,
+                {"attempts": 0, "wrong": 0, "last_seen": None, "source_chunk_ids": []},
+            )
+
+
+def chunks_for_concept(
+    concept: str,
+    chunk_lookup: Dict[str, Chunk],
+    *,
+    limit: int = 3,
+) -> list[Chunk]:
+    matches = [
+        chunk
+        for chunk in chunk_lookup.values()
+        if concept in chunk.concepts
+    ]
+    return matches[:limit]
+
+
+def is_recommendable_concept(concept: str) -> bool:
+    concept = concept.strip()
+    return bool(concept and concept != "通用知识点" and 2 <= len(concept) <= 24)
 
 
 def get_all_status() -> dict:

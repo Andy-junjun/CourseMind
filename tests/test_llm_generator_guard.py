@@ -124,6 +124,28 @@ def test_answer_question_returns_answer_and_citations(monkeypatch):
     assert "text_preview" in citation
 
 
+def test_answer_question_can_fallback_when_real_llm_fails(monkeypatch):
+    monkeypatch.setenv("COURSEMIND_MODE", "real")
+    monkeypatch.setenv("LLM_PROVIDER", "deepseek")
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-key")
+
+    def raise_network_error(*args, **kwargs):
+        raise RuntimeError("network blocked")
+
+    monkeypatch.setattr("src.generator.generate_text", raise_network_error)
+
+    result = answer_question(
+        "激活函数有什么作用？",
+        [make_ranked(text="激活函数会引入非线性，使神经网络能够学习复杂关系。")],
+        allow_fallback=True,
+    )
+
+    assert "本地检索证据" in result["answer"]
+    assert "激活函数会引入非线性" in result["answer"]
+    assert result["fallback_error"] == "network blocked"
+    assert result["citations"][0]["chunk_id"] == "c1"
+
+
 def test_build_citations_preserves_scores():
     citation = build_citations([make_ranked(ranker_score=0.66)])[0]
 

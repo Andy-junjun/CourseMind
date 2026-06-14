@@ -56,6 +56,21 @@ adjacent
 shared_concept
 ```
 
+## concept 来源
+
+`shared_concept` 不再主要依赖人工维护的概念词表。当前流程会复用中文 embedding 模型做 KeyBERT-style 自动关键词抽取：
+
+```text
+chunk 文本
+-> jieba / 统计方法生成候选关键词和短语
+-> 使用当前中文 embedding 模型编码 chunk 与候选词
+-> 按语义相似度选择 Top-N keywords
+-> 写入 chunk.concepts
+-> 两个 chunk 的 concepts 有交集时生成 shared_concept
+```
+
+如果当前运行环境不是 real embedding provider，会自动退回统计关键词抽取，保证测试和轻量运行模式可用。GraphRAG 还会根据全库词频过滤过宽概念，避免“深度学习”这类大词把过多 chunk 连在一起。
+
 ## 关系分数
 
 当前默认分数：
@@ -67,7 +82,7 @@ adjacent         0.25
 shared_concept   0.40 + 0.10 * 共享知识点数量
 ```
 
-如果一个候选 chunk 与多个 seed chunk 有关系，取最高关系组合分数作为 `graph_score`。
+如果一个候选 chunk 与多个 seed chunk 有关系，取最高关系组合分数作为 `graph_score`。最终 `graph_score` 会裁剪到 0-1 区间：原始 seed chunk 记为 1.0，GraphRAG 扩展 chunk 根据关系强度得到 0-1 之间的分数。
 
 ## 页面解释与可视化
 

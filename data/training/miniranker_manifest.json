@@ -1,0 +1,98 @@
+{
+  "model_path": "data/training/miniranker.pt",
+  "feature_names": [
+    "dense_score",
+    "bm25_score",
+    "graph_score",
+    "same_page_bonus",
+    "same_chapter_bonus",
+    "chunk_length_norm"
+  ],
+  "query_files": [
+    "data/eval/retrieval_queries-ddw.csv",
+    "data/raw/liushuyang/questions.csv",
+    "data/raw/public/deep_learning_core/questions.csv",
+    "data/raw/xujiaze/questions.csv"
+  ],
+  "metrics": {
+    "train_examples": 2550.0,
+    "validation_examples": 450.0,
+    "positive_labels": 1002.0,
+    "train_loss": 0.6034051775932312,
+    "validation_loss": 0.6235036849975586,
+    "validation_mean_prediction": 0.35097139874576694
+  },
+  "example_count": 3000,
+  "sample_examples": [
+    {
+      "query": "CNN中的卷积核有什么作用？",
+      "chunk_id": "public_deep_learning_core_cnn卷积神经网络_可靠资料整理_md_p001_c007",
+      "file_name": "public/deep_learning_core/CNN卷积神经网络_可靠资料整理.md",
+      "features": [
+        0.7054668068885803,
+        0.7777777777777778,
+        1.0,
+        1.0,
+        1.0,
+        0.415
+      ],
+      "label": 0.7
+    },
+    {
+      "query": "CNN中的卷积核有什么作用？",
+      "chunk_id": "public_deep_learning_core_cnn卷积神经网络_可靠资料整理_md_p001_c002",
+      "file_name": "public/deep_learning_core/CNN卷积神经网络_可靠资料整理.md",
+      "features": [
+        0.7250940203666687,
+        0.5555555555555556,
+        1.0,
+        1.0,
+        0.0,
+        0.51
+      ],
+      "label": 0.7
+    },
+    {
+      "query": "CNN中的卷积核有什么作用？",
+      "chunk_id": "public_deep_learning_core_cnn卷积神经网络_可靠资料整理_md_p001_c005",
+      "file_name": "public/deep_learning_core/CNN卷积神经网络_可靠资料整理.md",
+      "features": [
+        0.6001981496810913,
+        0.5555555555555556,
+        1.0,
+        1.0,
+        0.0,
+        0.465
+      ],
+      "label": 0.7
+    },
+    {
+      "query": "CNN中的卷积核有什么作用？",
+      "chunk_id": "ddw的资料_cha5_卷积神经网络_pdf_p003_c001",
+      "file_name": "ddw的资料/cha5-卷积神经网络.pdf",
+      "features": [
+        0.5631546378135681,
+        0.5555555555555556,
+        1.0,
+        0.0,
+        0.0,
+        0.54
+      ],
+      "label": 1.0
+    },
+    {
+      "query": "CNN中的卷积核有什么作用？",
+      "chunk_id": "public_deep_learning_core_cnn卷积神经网络_可靠资料整理_md_p001_c001",
+      "file_name": "public/deep_learning_core/CNN卷积神经网络_可靠资料整理.md",
+      "features": [
+        0.7072595357894897,
+        0.3333333333333333,
+        1.0,
+        1.0,
+        0.0,
+        0.6375
+      ],
+      "label": 0.7
+    }
+  ]
+}

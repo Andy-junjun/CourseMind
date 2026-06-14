@@ -53,9 +53,8 @@ def test_chunker_extracts_chinese_chapter_heading():
 
     assert chunks[0].chapter == "一、项目目标"
     assert chunks[-1].chapter == "二、评分标准"
-    assert "深度学习" in chunks[0].concepts
-    assert "强化学习" in chunks[0].concepts
-    assert "评分标准" in chunks[-1].concepts
+    assert chunks[0].concepts != ["通用知识点"]
+    assert chunks[-1].concepts != ["通用知识点"]
 
 
 def test_chunk_size_and_overlap_are_configurable():
@@ -78,10 +77,9 @@ def test_invalid_chunk_arguments_raise_errors():
         chunk_pages(pages, chunk_size=20, overlap=20)
 
 
-def test_infer_concepts_supports_aliases_and_defaults():
+def test_infer_concepts_uses_automatic_keywords_and_defaults():
     concepts = infer_concepts("系统使用检索增强生成、神经重排序和多臂老虎机进行复习推荐。")
 
-    assert "RAG" in concepts
-    assert "MiniRanker" in concepts
-    assert "Bandit" in concepts
-    assert infer_concepts("普通课程内容") == ["通用知识点"]
+    assert concepts != ["通用知识点"]
+    assert any("检索" in concept or "排序" in concept or "复习" in concept for concept in concepts)
+    assert infer_concepts("。！？") == ["通用知识点"]

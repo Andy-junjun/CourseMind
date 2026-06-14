@@ -1,21 +1,159 @@
 # 贡献规范
 
-## 硬性规则
+本文档用于统一 CourseMind 小组协作方式。目标不是把流程写复杂，而是让每个人提交的代码、资料和实验记录都能被系统直接使用，也能在汇报时追溯来源。
 
-1. `src/schemas.py` 是全项目共享数据契约，不能随意重命名字段。
-2. `docs/api_contract.md` 中的公共函数签名在第一轮冲刺中冻结。
-3. 每次修改后都要保证 `mock` 模式仍然可以运行。
-4. 非代码工作也必须放进仓库，方便检查、验收和在汇报中引用。
-5. 不要提交 API Key、私人 PDF、模型权重或生成的索引文件。
+## 基本规则
 
-## 小组边界
+1. 不要提交 API Key、账号密码、私有模型权重或无法公开的资料。
+2. 不要随意修改 `src/schemas.py` 的字段名；这些字段是解析、检索、出题和复习推荐共用的数据契约。
+3. 每次提交前至少保证 `mock` 模式能运行，代码改动建议运行 `python -m pytest`。
+4. 数据、实验记录、问题集、PPT 素材都要进仓库，不能只发在微信群里。
+5. 新增本地生成物前先判断是否应该提交：`data/processed/`、`data/indexes/`、临时日志通常不提交。
+
+## 推荐分工
 
 ```text
-A 组：负责 app.py、系统集成、环境说明和演示稳定性。
-B 组：负责文档解析、中文 Chunk、检索、BM25、向量接口和 GraphRAG-lite 图扩展。
-C 组：负责 LLM 调用、答案生成、拒答机制、MiniRanker 和可选模型训练。
-D 组：负责自动出题、答题反馈、Bandit 推荐、测试问题、实验记录和 PPT 素材。
+A 组：app.py、页面集成、环境说明、演示稳定性
+B 组：文档解析、中文 chunk、embedding、FAISS、BM25、GraphRAG-lite
+C 组：LLM 调用、答案生成、拒答机制、MiniRanker、模型训练
+D 组：自动出题、答题反馈、Bandit 推荐、测试问题、实验记录和 PPT 素材
 ```
 
-跨组协作只能通过公开接口完成。不要为了临时跑通而私自修改别人的数据结构或函数签名。
+跨组协作应通过公共函数和数据结构完成，不要为了临时跑通而私自改别人的接口。
 
+## 资料提交规范
+
+每位成员把资料放到独立目录：
+
+```text
+data/raw/<成员名或主题>/
+```
+
+建议结构：
+
+```text
+data/raw/<成员名或主题>/
+  metadata.csv
+  questions.csv
+  资料1.md
+  资料2.pdf
+```
+
+`metadata.csv` 建议字段：
+
+```text
+file_name,topic,source,contributor,reliability,notes
+```
+
+`questions.csv` 建议字段：
+
+```text
+question,answer,concept,source_file,page,difficulty
+```
+
+资料要求：
+
+- 优先提交可解析文本：Markdown、txt、带文本层 PDF。
+- PDF 如果主要是图片，先在 `metadata.csv` 说明，避免系统解析后没有有效 chunk。
+- 文件名尽量包含主题和贡献人，例如 `模型训练_流程与常见问题_张三.md`。
+- 不要只提交截图；截图中的信息很难进入检索和出题链路。
+
+## 出题数据要求
+
+当前页面可以基于 chunk 自动生成概念选择题，但人工整理的问题仍然很有价值。建议成员补充 `questions.csv`，用于后续评测和更高质量出题。
+
+每道题至少包含：
+
+- 问题
+- 标准答案
+- 对应知识点
+- 来源文件或页码
+- 难度
+
+示例：
+
+```csv
+question,answer,concept,source_file,page,difficulty
+卷积神经网络中权重共享的作用是什么？,减少参数量并增强局部特征提取能力,CNN,cha5-卷积神经网络.pdf,3,medium
+```
+
+## 代码贡献流程
+
+1. 拉取最新代码。
+
+```bash
+git pull origin main
+```
+
+2. 安装依赖。
+
+```bash
+pip install -r requirements.txt
+```
+
+3. 修改代码或数据后运行测试。
+
+```bash
+python -m pytest
+```
+
+4. 如果改了 `data/raw/`，重新构建索引验证。
+
+```bash
+python scripts/ingest.py
+python -m streamlit run app.py --server.port 8501 --server.address 127.0.0.1
+```
+
+5. 提交前检查状态。
+
+```bash
+git status
+```
+
+## 接口边界
+
+常用数据结构在 `src/schemas.py`：
+
+- `DocumentPage`：解析后的页
+- `Chunk`：进入检索、图扩展和出题的最小知识片段
+- `RetrievedChunk`：向量检索和 BM25 后的候选片段
+- `RankedChunk`：MiniRanker 排序后的证据片段
+- `QuizItem`：出题和 Bandit 反馈使用的题目结构
+
+常用模块：
+
+- `src/document_loader.py`：PDF / 文本解析
+- `src/chunker.py`：chunk 切分与概念抽取
+- `src/vector_store.py`：FAISS 索引构建、保存、加载
+- `src/retriever.py`：dense + BM25 检索
+- `src/graph_store.py`：GraphRAG-lite 扩展与解释
+- `src/miniranker.py`：候选证据重排序
+- `src/study_tools.py`：自动出题
+- `src/bandit_recommender.py`：答题反馈和复习推荐
+
+## 不要提交的内容
+
+```text
+.env
+data/processed/chunks.jsonl
+data/indexes/faiss.index
+data/indexes/faiss.meta.json
+data/processed/quiz_state.json
+logs/
+__pycache__/
+.pytest_cache/
+```
+
+如果确实需要提交模型、索引或大型数据，先在群里说明原因，并确认文件大小和许可证。
+
+## 汇报材料建议
+
+每个成员最好留下可引用材料：
+
+- 负责的数据目录
+- 做过的代码模块
+- 运行截图或测试结果
+- 遇到的问题和解决方式
+- 可以放进 PPT 的 1-2 张图或表
+
+这样即使最后由一个人统一汇报，也能清楚说明每个人的贡献。
