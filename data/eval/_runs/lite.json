@@ -1,0 +1,104 @@
+{
+  "label": "lite",
+  "provider": "lite",
+  "model_path": "models/embedding/finetuned",
+  "num_queries": 18,
+  "recall": {
+    "@1": 0.2778,
+    "@3": 0.6667,
+    "@5": 0.7222
+  },
+  "mrr": 0.437,
+  "per_query": [
+    {
+      "query": "CNN中的卷积核有什么作用？",
+      "expected": "cha5-卷积神经网络.pdf",
+      "rank": 3
+    },
+    {
+      "query": "什么是池化层？它有哪些类型？",
+      "expected": "cha5-卷积神经网络.pdf",
+      "rank": 5
+    },
+    {
+      "query": "CNN中的感受野是什么意思？",
+      "expected": "cha5-卷积神经网络.pdf",
+      "rank": 2
+    },
+    {
+      "query": "步长和填充对CNN输出尺寸有什么影响？",
+      "expected": "cha5-卷积神经网络.pdf",
+      "rank": null
+    },
+    {
+      "query": "CNN为什么具有平移不变性？",
+      "expected": "cha5-卷积神经网络.pdf",
+      "rank": 3
+    },
+    {
+      "query": "什么是循环神经网络？",
+      "expected": "cha6-循环神经网络.pdf",
+      "rank": 1
+    },
+    {
+      "query": "RNN的隐藏状态是如何更新的？",
+      "expected": "cha6-循环神经网络.pdf",
+      "rank": 1
+    },
+    {
+      "query": "RNN在训练时为什么会出现梯度消失？",
+      "expected": "cha6-循环神经网络.pdf",
+      "rank": null
+    },
+    {
+      "query": "LSTM引入了哪几个门控机制？",
+      "expected": "cha6-循环神经网络.pdf",
+      "rank": 1
+    },
+    {
+      "query": "LSTM的遗忘门有什么作用？",
+      "expected": "cha6-循环神经网络.pdf",
+      "rank": null
+    },
+    {
+      "query": "LSTM如何解决RNN的长期依赖问题？",
+      "expected": "cha6-循环神经网络.pdf",
+      "rank": 3
+    },
+    {
+      "query": "GRU相比LSTM做了哪些简化？",
+      "expected": "cha6-循环神经网络.pdf",
+      "rank": 2
+    },
+    {
+      "query": "GRU中的重置门起什么作用？",
+      "expected": "cha6-循环神经网络.pdf",
+      "rank": 1
+    },
+    {
+      "query": "什么是自注意力机制？",
+      "expected": "Transformer注意力机制.md",
+      "rank": 1
+    },
+    {
+      "query": "多头注意力的优势是什么？",
+      "expected": "Transformer注意力机制.md",
+      "rank": null
+    },
+    {
+      "query": "Transformer为什么需要位置编码？",
+      "expected": "Transformer注意力机制.md",
+      "rank": 3
+    },
+    {
+      "query": "Transformer与RNN的主要区别是什么？",
+      "expected": "Transformer注意力机制.md",
+      "rank": 3
+    },
+    {
+      "query": "这个资料里有没有讲YOLOv10？",
+      "expected": "cha5-卷积神经网络.pdf",
+      "rank": null
+    }
+  ]
+}

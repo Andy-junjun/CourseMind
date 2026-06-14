@@ -1,0 +1,35 @@
+[
+  {
+    "label": "lite",
+    "provider": "lite",
+    "num_queries": 18,
+    "recall": {
+      "@1": 0.2778,
+      "@3": 0.6667,
+      "@5": 0.7222
+    },
+    "mrr": 0.437
+  },
+  {
+    "label": "bge-base",
+    "provider": "sentence_transformers",
+    "num_queries": 18,
+    "recall": {
+      "@1": 0.2778,
+      "@3": 0.6111,
+      "@5": 0.7778
+    },
+    "mrr": 0.4648
+  },
+  {
+    "label": "bge-finetuned",
+    "provider": "sentence_transformers",
+    "num_queries": 18,
+    "recall": {
+      "@1": 0.4444,
+      "@3": 0.8333,
+      "@5": 1.0
+    },
+    "mrr": 0.6713
+  }
+]

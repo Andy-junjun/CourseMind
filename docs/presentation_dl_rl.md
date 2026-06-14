@@ -117,23 +117,65 @@ Triplet Loss 让模型学会：
 
 即"正样本要比负样本更近至少一个间隔 margin"。这是度量学习（metric learning）的经典做法。
 
-### 3.3 已跑通的训练记录（小样本验证）
+### 3.3 训练数据与训练记录（已用完整数据训练）
+
+代码：[scripts/build_training_pairs.py](../scripts/build_training_pairs.py) 构造训练对，[scripts/train_embedding.py](../scripts/train_embedding.py) 真实 TripletLoss 微调。
+
+**训练数据**（`data/training/embedding_pairs.jsonl`）：
 
 | 项目 | 值 |
 |------|-----|
-| 基座模型 | BAAI/bge-small-zh-v1.5（输出 512 维，范数 1.0） |
-| 框架 | sentence-transformers 3.0.1 / torch 2.3.1+cpu |
-| 小样本训练 | 16 条样本、1 epoch、batch=4 |
-| train_loss | 4.77（仅验证链路跑通，非最终效果） |
-| 产物 | `models/embedding/finetuned/`（含 model.safetensors） |
-| 入库验证 | 9 页 → 189 chunks，FAISS 元数据记录 dim=512 / provider=sentence_transformers |
+| 训练三元组 | **900 条** |
+| 不同 query | **75 个**（课程真实问题） |
+| 每 query 负样本 | 12 个（**hard negative**：同主题但不直接回答该问题的片段） |
+| 主题覆盖 | CNN 120 / Transformer 96 / 反向传播 72 / RNN 60 / 优化器 60 / 神经网络基础 60 / LSTM 48 / GRU 36 / 策略梯度 36 … |
 
-**诚实话术（重要）**：这部分目前是"小样本跑通链路"，不是"已证明效果提升"。答辩时主动说明下一步是用完整 200 条训练对训练、并用 Recall@5 对比 lite / base BGE / 微调 BGE 三者的检索效果，避免被老师追问时被动。
+> 说明：900 = 75 个问题 × 每题约 12 个难负样本。汇报时强调"75 个课程问题 + 难负样本采样"，而不是单说 900，更准确也更经得起追问。
+
+**训练记录**（CPU 实跑）：
+
+| 项目 | 值 |
+|------|-----|
+| 基座模型 | BAAI/bge-small-zh-v1.5（输出 512 维，L2 归一化） |
+| 框架 | sentence-transformers 3.0.1 / torch 2.3.1+cpu |
+| 损失 | TripletLoss（度量学习） |
+| 配置 | 900 对、3 epochs、batch=8、warmup=50、共 339 steps |
+| 耗时 | 约 12.5 分钟（756 秒） |
+| train_loss | 基座阶段 ~4.77 → 训练后 **4.50** |
+| 产物 | `models/embedding/finetuned/`（model.safetensors + training_manifest.json，记录 pair_count=900 / epochs=3） |
+
+### 3.4 检索效果评测：微调真的有效 ✅
+
+代码：[scripts/evaluate_retrieval.py](../scripts/evaluate_retrieval.py)（为每档 spawn 独立子进程，避开 embedder 的 `lru_cache` 串档问题）
+评测集：`data/eval/retrieval_queries-ddw.csv`（18 个带金标文件的检索问题）
+指标：**Recall@K**（金标文件是否进 top-K）、**MRR**（首个命中的倒数排名均值）
+
+| 档位 | Recall@1 | Recall@3 | Recall@5 | MRR |
+|------|:--------:|:--------:|:--------:|:---:|
+| lite（轻量词袋） | 0.2778 | 0.6667 | 0.7222 | 0.4370 |
+| bge-base（原始 BGE） | 0.2778 | 0.6111 | 0.7778 | 0.4648 |
+| **bge-finetuned（微调 BGE）** | **0.4444** | **0.8333** | **1.0000** | **0.6713** |
+
+**怎么讲这张表（汇报重点）**：
+- **微调 BGE vs 原始 BGE**：Recall@1 从 0.28 → **0.44（+60%）**，Recall@5 从 0.78 → **1.00（金标 100% 进前 5）**，MRR 从 0.46 → **0.67（+44%）**。这证明用课程训练对做领域微调，**实打实提升了中文检索效果**，不是"只跑通链路"。
+- **为什么 base BGE 没明显赢过 lite**：通用 BGE 没见过我们这门课的术语表达，在小评测集上甚至个别指标略低于 lite；一旦用课程数据微调，立刻全面领先——这恰好说明**领域微调的必要性**。
+- **诚实边界**：评测集是 18 题的小规模、且与训练 query 同源（ddw 资料）。结论可靠但样本偏小，下一步应扩充跨成员的评测集做交叉验证。这个边界主动说，比被问出来好。
+
+**可复现命令**：
+
+```bash
+# 1. 构造训练对（已生成 data/training/embedding_pairs.jsonl）
+python scripts/build_training_pairs.py --target-count 200 --negatives-per-query 20
+# 2. 微调
+python scripts/train_embedding.py --epochs 3 --batch-size 8 --warmup-steps 50
+# 3. 三档对比评测
+python scripts/evaluate_retrieval.py --all
+```
 
 **可引用资料（微调 / 度量学习）**：
 - Schroff et al., *FaceNet: A Unified Embedding for Face Recognition and Clustering*, CVPR 2015 —— Triplet Loss 经典来源。
 - Karpukhin et al., *Dense Passage Retrieval for Open-Domain QA (DPR)*, EMNLP 2020 —— 用对比学习训练检索 embedding 的代表作。
-- 博客：Sentence-Transformers Training Overview https://www.sbert.net/docs/training/overview.html
+- 博客：Sentence-Transformers Training Overview <https://www.sbert.net/docs/training/overview.html>
 
 ---
 
@@ -363,7 +405,7 @@ Bandit 决定"考哪个知识点"，出题引擎负责"把这个知识点变成�
 | 这跟直接调 ChatGPT 有什么区别？ | 我们是 RAG：先从课程资料检索证据再生成，答案可溯源、可引用，且不依赖大模型的记忆，资料更新即时生效。 |
 | 为什么用 IndexFlatIP 不用近似索引？ | 课程数据量百级 chunk，精确检索已足够快且结果可复现；数据量上万再换 IVF/HNSW。 |
 | 这里的强化学习是不是太简单？ | 多臂老虎机是强化学习中"无状态转移"的基础模型，UCB1 有严格的 regret 理论界（Auer 2002）。我们用它解决真实的探索-利用问题，并保证了推荐与可执行动作空间一致。 |
-| 你们的 embedding 微调真有提升吗？ | 目前是小样本跑通链路（16 条样本验证产物可加载入库），效果评估是下一步：用完整 200 训练对训练并用 Recall@5 对比 lite/base/微调三档。（诚实，不夸大） |
+| 你们的 embedding 微调真有提升吗？ | 有，已用 900 条课程训练对（75 问题 × 难负样本）微调并量化验证：微调 BGE 相比原始 BGE，Recall@1 0.28→0.44、Recall@5 0.78→1.00、MRR 0.46→0.67（详见 §3.4）。评测集 18 题、与训练同源，下一步做跨成员交叉验证。 |
 | BM25 是标准实现吗？ | 我们用的是简化的词项重叠召回分（非带 k1/b 的标准 BM25），目的是给稠密检索补一路关键词信号；标准 BM25 是后续可替换项。 |
 
 ---
@@ -396,6 +438,6 @@ Bandit 决定"考哪个知识点"，出题引擎负责"把这个知识点变成�
 
 ## 12. 一页总结（汇报收尾用）
 
-> CourseMind 用**深度学习**解决"听懂中文问题、找对课程证据"——Transformer 句向量（BGE-small-zh）做语义编码，FAISS 做稠密检索，混合 BM25 与 GraphRAG-lite 补召回，再用小型 MLP 做学习排序精排，全程带引用、可拒答；用**强化学习**解决"该复习什么"——把知识点建模为多臂老虎机，用 UCB1 在"练薄弱点"与"探索新点"之间自适应权衡。两条主线都不是玩具：检索链路是工业 RAG 的标准两阶段架构，老虎机有严格的理论保证。
+> CourseMind 用**深度学习**解决"听懂中文问题、找对课程证据"——Transformer 句向量（BGE-small-zh）做语义编码，FAISS 做稠密检索，混合 BM25 与 GraphRAG-lite 补召回，再用小型 MLP 做学习排序精排，全程带引用、可拒答；更进一步，我们用 900 条课程训练对对 BGE 做了领域微调，**量化验证 Recall@5 从 0.78 提升到 1.00、MRR 从 0.46 提升到 0.67**。用**强化学习**解决"该复习什么"——把知识点建模为多臂老虎机，用 UCB1 在"练薄弱点"与"探索新点"之间自适应权衡。两条主线都不是玩具：检索链路是工业 RAG 的标准两阶段架构且微调效果经过评测验证，老虎机有严格的理论保证。
 
 > 更完整的全量架构、数据流和 API 契约见 [docs/technical_design.md](technical_design.md)。

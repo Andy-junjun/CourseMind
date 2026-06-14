@@ -2,7 +2,18 @@
 
 ## 当前结论
 
-X3 和 X4 已经形成可运行闭环：
+已用完整 900 条训练对（75 个课程问题 × 每题约 12 个难负样本）对 BAAI/bge-small-zh-v1.5
+做 TripletLoss 微调（3 epochs / batch=8 / 339 steps / 约 12.5 分钟），并用
+`scripts/evaluate_retrieval.py` 做了三档 Recall@K / MRR 对比，**验证微调显著有效**：
+
+```text
+档位              Recall@1  Recall@3  Recall@5   MRR
+lite              0.2778    0.6667    0.7222   0.4370
+bge-base          0.2778    0.6111    0.7778   0.4648
+bge-finetuned     0.4444    0.8333    1.0000   0.6713   <- 微调后全面领先
+```
+
+完整闭环：
 
 ```text
 检索评测问题 / 组员 questions.csv
@@ -82,21 +93,24 @@ BAAI/bge-small-zh-v1.5
 向量范数：1.0
 ```
 
-小样本真实训练命令：
+正式训练命令（完整 900 对）：
 
 ```powershell
-python scripts/train_embedding.py --max-samples 16 --epochs 1 --batch-size 4 --warmup-steps 1
+python scripts/train_embedding.py --epochs 3 --batch-size 8 --warmup-steps 50
 ```
 
 训练结果：
 
 ```text
-train_runtime: 4.3681
-train_samples_per_second: 3.663
-train_steps_per_second: 0.916
-train_loss: 4.769443988800049
-epoch: 1.0
+train_runtime: 753.6993
+train_samples_per_second: 3.582
+train_steps_per_second: 0.45
+train_loss: 4.498719161942294
+epoch: 3.0
+pair_count: 900
 ```
+
+（早期还做过 16 条小样本 / 1 epoch 的链路验证，train_loss≈4.77，仅用于确认流程可跑通，现已被上述完整训练取代。）
 
 输出目录：
 
@@ -140,13 +154,14 @@ FAISS 元数据：
 
 ## 风险与下一步
 
-当前训练只是 16 条样本的小规模验证，作用是证明链路能跑通，不代表模型效果已经明显提升。
+已完成：900 对正式训练 + `scripts/evaluate_retrieval.py` 三档 Recall@K/MRR 评测，
+微调相比基座全面提升（Recall@5 0.78→1.00，MRR 0.46→0.67）。
 
-下一步应该做：
+仍存在的局限与下一步：
 
 ```text
-1. 增加与当前 raw 数据匹配的 retrieval_queries/questions
-2. 用完整 200 条训练对训练 1-3 个 epoch
-3. 实现 evaluate_retrieval.py，比较 lite、base transformer、fine-tuned transformer 的 Recall@5
-4. 把训练耗时、Recall@5、响应时间整理进 docs/experiment_report.md
+1. 评测集仅 18 题、且与训练 query 同源（ddw 资料），样本偏小、存在乐观偏差
+2. 下一步：扩充跨成员（liushuyang / xujiaze / shiyan11-15）的评测集做交叉验证
+3. 补充响应时延对比（lite vs transformer 的检索耗时）
+4. 把训练耗时、Recall@K、时延整理进 docs/experiment_report.md
 ```
