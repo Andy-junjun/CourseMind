@@ -1,0 +1,40 @@
+query,expected_file,expected_topic,query_type,answer_keywords,source
+贝叶斯优化在超参数搜索中相比网格搜索有什么优势？,模型调参_超参数优化方法_陈科宇.md,模型调参,fact,代理模型;智能选择;效率高;计算昂贵,data/raw/shiyan11-15/questions.csv
+验证集和交叉验证在模型泛化能力评估中分别起到什么作用？,实验结果分析方法_刘书洋.pdf,模型泛化能力与验证方法,compare,验证集;交叉验证;未见过的数据;K折交叉验证;泛化到不同数据子集,data/raw/liushuyang/questions.csv
+卷积可以分为哪三种类型，它们的输出长度有什么区别？,cha5-卷积神经网络.pdf,卷积类型的分类,compare,窄卷积; 宽卷积; 等宽卷积; 输出长度,data/raw/ddw的资料/questions.csv
+Adam优化器相比SGD有什么优势？为什么Adam在快速实验中被广泛使用？,损失函数与优化器_对比与选择_徐嘉泽.md,优化器/Adam算法,compare,一阶矩估计;二阶矩估计;自适应学习率;超参数不敏感;收敛快,data/raw/xujiaze/questions.csv
+网格搜索和随机搜索在超参数优化中各有什么优缺点？,模型调参_超参数优化方法_陈科宇.md,模型调参,compare,穷举;计算量大;随机采样;效率高;覆盖范围,data/raw/shiyan11-15/questions.csv
+LSTM长短期记忆网络中的三个门分别起什么作用？,cha6-循环神经网络.pdf,LSTM的门控机制,summary,输入门控制新信息;遗忘门控制旧信息保留;输出门控制外部输出,data/raw/ddw的资料/questions.csv
+为什么 CourseMind 需要 questions.csv 而不只是 raw 资料？,训练评估与实验方法_可靠资料整理.md,训练评估,fact,questions.csv;评估;训练pair;Recall@5;expected_file,data/raw/public/deep_learning_core/questions.csv
+简单循环网络（SRN）的一个完全连接的循环网络可以近似什么类型的系统？,cha6-循环神经网络.pdf,简单循环网络的近似能力,fact,任何非线性动力系统;通用近似定理;动力系统,data/raw/ddw的资料/questions.csv
+自编码器和PCA在主成分分析上各有什么优劣？,自编码器_基本结构与变分自编码器_陈科宇.md,自编码器,compare,线性;非线性;神经网络;表达能力,data/raw/shiyan11-15/questions.csv
+注意力机制中的 Query、Key、Value 分别表示什么？,Attention与Transformer_可靠资料整理.md,Transformer,fact,Query;Key;Value;相似度;加权求和,data/raw/public/deep_learning_core/questions.csv
+为什么在卷积神经网络中应用卷积层而不是全连接层？请说明参数减少的原理。,cha5-卷积神经网络.pdf,CNN相比全连接网络的优势,summary,局部连接; 参数少; 权重共享; 计算效率高,data/raw/ddw的资料/questions.csv
+CNN为什么具有平移不变性？,cha5-卷积神经网络.pdf,CNN,fact,权值共享;卷积操作;特征位置,data/eval/retrieval_queries-ddw.csv
+列举Actor-Critic算法中Critic的评估点有哪些可选形式？,Actor-Critic_刘书洋.pdf,Actor-Critic算法可选形式,summary,状态价值;动作价值;TD误差;优势函数;TD(λ)误差,data/raw/liushuyang/questions.csv
+过拟合、欠拟合和理想状态下，模型复杂度、训练误差和测试误差分别是什么表现？,模型正则化与泛化_实践指南_徐嘉泽.md,过拟合欠拟合判断方法,compare,过拟合训练误差低测试误差高;欠拟合两者都高;理想状态两者都低且差距小;模型复杂度对应不同状态,data/raw/xujiaze/questions.csv
+为什么人工神经元模型中必须包含偏置项？,深度学习入门_神经网络结构_徐嘉泽.md,神经元基本结构,fact,调节激活阈值; 输入全为0时仍产生输出; 增加模型灵活性,data/raw/xujiaze/questions.csv
+GRU（门控循环单元）中重置门的具体作用是什么？,cha6-循环神经网络.pdf,GRU的重置门机制,fact,控制候选状态计算;决定是否依赖上一时刻状态;重置门rt,data/raw/ddw的资料/questions.csv
+在实践中，为了追求最佳模型性能，应该如何选择和组合损失函数、优化器和学习率策略？,损失函数与优化器_对比与选择_徐嘉泽.md,损失函数与优化器的实践应用,summary,Adam快速实验;SGD+Momentum精细调优;学习率调度;泛化性能;交叉熵与Sigmoid配合,data/raw/xujiaze/questions.csv
+广义优势估计（GAE）在策略梯度优化中如何平衡偏差和方差？,策略梯度_刘书洋.pdf,广义优势估计,fact,GAE; 偏差; 方差; 平衡; Generalized Advantage Estimation,data/raw/liushuyang/questions.csv
+Dropout的作用是什么？为什么能防止过拟合？,过拟合与正则化_方法详解_徐嘉泽.md,过拟合与正则化,fact,随机失活;共适应;隐式集成;鲁棒特征;防止过拟合;丢弃率,data/raw/xujiaze/questions.csv
+神经元模型中 z=w^T x+b 和 a=f(z) 分别表示什么？,神经网络与反向传播_可靠资料整理.md,神经网络基础,fact,权重;输入;偏置;激活函数;输出,data/raw/public/deep_learning_core/questions.csv
+什么是互相关，它与卷积操作有什么关系？,cha5-卷积神经网络.pdf,互相关与卷积的关系,compare,翻转不必要; 特征提取目标; 简化操作; 互相关定义,data/raw/ddw的资料/questions.csv
+AdamW 与普通 Adam 在权重衰减处理上有什么区别？,优化器与训练稳定性_可靠资料整理.md,优化器,compare,AdamW;Adam;权重衰减;解耦;Transformer,data/raw/public/deep_learning_core/questions.csv
+自编码器的编码器和解码器分别负责什么？,自编码器_基本结构与变分自编码器_陈科宇.md,自编码器,fact,降维;特征提取;重构;还原,data/raw/shiyan11-15/questions.csv
+Recall@K 和 MRR 分别衡量什么？,训练评估与实验方法_可靠资料整理.md,训练评估,compare,Recall@K;MRR;Top-K;排序;正确资料,data/raw/public/deep_learning_core/questions.csv
+RNN 如何利用隐藏状态处理序列数据？,RNN_LSTM与序列建模_可靠资料整理.md,RNN,fact,隐藏状态;历史信息;序列;时间步;参数共享,data/raw/public/deep_learning_core/questions.csv
+BERT 类模型和 GPT 类模型的主要区别是什么？,Attention与Transformer_可靠资料整理.md,Transformer,compare,BERT;GPT;Encoder;Decoder;理解;生成,data/raw/public/deep_learning_core/questions.csv
+TRPO和PPO两种算法的主要区别和各自的优缺点是什么？,策略梯度_刘书洋.pdf,TRPO与PPO比较,compare,TRPO; PPO; 硬约束; 裁剪; 信任域; 近端策略,data/raw/liushuyang/questions.csv
+Sigmoid和ReLU激活函数各有什么优缺点？,神经网络基础_入门笔记_徐嘉泽.md,神经网络基础,compare,Sigmoid;梯度消失;ReLU;神经元死亡;计算简单;零中心化,data/raw/xujiaze/questions.csv
+F1分数为什么被称为精确率和召回率的调和平均？,实验结果分析_评估指标与诊断_陈科宇.md,实验结果分析,fact,2PR/(P+R);平衡;综合;单一指标,data/raw/shiyan11-15/questions.csv
+小数据微调 embedding 有哪些过拟合风险？,Embedding语义检索与微调_可靠资料整理.md,微调,fact,小数据;过拟合;验证集;学习率;Recall@5,data/raw/public/deep_learning_core/questions.csv
+L2正则化和L1正则化有什么区别？为什么在深度神经网络中L2更常用？,模型正则化与泛化_实践指南_徐嘉泽.md,L2正则化与L1正则化的对比,compare,L2让所有权重变小但不为零;L1会让一部分权重变为零稀疏化;神经网络特征通常联合表达不需要刻意稀疏化,data/raw/xujiaze/questions.csv
+LSTM 的遗忘门、输入门和输出门分别有什么作用？,RNN_LSTM与序列建模_可靠资料整理.md,LSTM,fact,遗忘门;输入门;输出门;记忆单元;门控,data/raw/public/deep_learning_core/questions.csv
+通用近似定理说明了什么？,深度学习入门_神经网络结构_徐嘉泽.md,神经网络基础,fact,通用近似定理;任意精度;有界闭集函数;隐藏层;前馈神经网络,data/raw/xujiaze/questions.csv
+为什么激活函数必须是非线性的？请用数学角度解释。,深度学习入门_神经网络结构_徐嘉泽.md,激活函数的重要性,fact,线性函数复合仍为线性; 多层失去意义; 引入非线性才能表示复杂关系,data/raw/xujiaze/questions.csv
+Actor-Critic算法中为什么需要两个神经网络，它们之间存在什么样的依赖关系？,Actor-Critic_刘书洋.pdf,Actor-Critic架构设计,fact,Actor更新策略参数;Critic更新价值参数;互相依赖;梯度更新;两个网络相互配合,data/raw/liushuyang/questions.csv
+训练过程中 loss 变成 NaN 时应该优先排查哪些因素？,优化器与训练稳定性_可靠资料整理.md,训练稳定性,fact,NaN;学习率;梯度爆炸;数据;损失函数;梯度裁剪,data/raw/public/deep_learning_core/questions.csv
+GRU相比LSTM做了哪些简化？,cha6-循环神经网络.pdf,GRU,compare,更新门;重置门;参数更少,data/eval/retrieval_queries-ddw.csv
+在感知器模型中，权重更新公式是什么？,深度学习入门_神经网络结构_徐嘉泽.md,神经网络基础,quiz,权重更新;误差;学习率;输入;分类错误;迭代,data/raw/xujiaze/questions.csv
+前馈网络与循环神经网络在处理输入依赖关系上有什么根本差异？,cha6-循环神经网络.pdf,前馈网络和循环神经网络的对比,compare,前馈网络输出只依赖当前输入;循环神经网络具有记忆能力;循环神经网络引入隐状态,data/raw/ddw的资料/questions.csv

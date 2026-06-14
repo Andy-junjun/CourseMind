@@ -1,17 +1,36 @@
 # Embedding Fine-tuning 报告
 
-## 当前结论
+## 当前结论（已纠正数据泄漏）
 
-X3 和 X4 已经形成可运行闭环：
+> 重要更正：早期一版结论曾报告"微调后 Recall@5 从 0.78→1.00、显著有效"。后来发现
+> 那次评测的测试问题**参与了训练**（train/test 同源），属于数据泄漏，结论无效。
+> 本节是修正后的结论。
+
+我们用 `scripts/split_dataset.py` 把全部 197 个课程问题按 query 维度做 **80/20 不重叠
+划分**（种子=42），只用 158 个训练问题构造 1896 条 TripletLoss 训练对微调
+BAAI/bge-small-zh-v1.5（3 epochs / batch=8 / 约 32 分钟），再用 `scripts/evaluate_retrieval.py`
+在 **39 个未参与训练的测试问题**上评测三档：
 
 ```text
-检索评测问题 / 组员 questions.csv
--> data/training/embedding_pairs.jsonl
--> scripts/train_embedding.py
--> models/embedding/finetuned/
--> EMBEDDING_MODEL_PATH=models/embedding/finetuned
--> python scripts/ingest.py
--> data/indexes/faiss.index
+档位              Recall@1  Recall@3  Recall@5   MRR
+lite              0.6667    0.9231    0.9487   0.7885
+bge-base          0.7436    0.9744    1.0000   0.8470   <- 原始基座最强
+bge-finetuned     0.5897    0.7949    0.8718   0.7030   <- 小规模微调反而退化
+```
+
+**结论**：在独立测试集上，**原始 BGE 检索效果最好**，小规模微调因弱负样本（同主题正确
+片段被当负例）与小数据过拟合而退化。对已在大规模中文语料上训练过的强基座，
+**直接使用比小规模 TripletLoss 微调更稳妥**。
+
+完整、防泄漏的实验闭环：
+
+```text
+所有 questions.csv / retrieval_queries
+-> scripts/split_dataset.py  (80/20 划分, 种子固定)
+-> data/eval/train_queries.csv  +  data/eval/test_queries.csv
+-> scripts/build_training_pairs.py --queries-file train_queries.csv (仅训练集)
+-> scripts/train_embedding.py -> models/embedding/finetuned/
+-> scripts/evaluate_retrieval.py (仅 test_queries.csv 评测)
 ```
 
 ## 已实现内容
@@ -82,21 +101,27 @@ BAAI/bge-small-zh-v1.5
 向量范数：1.0
 ```
 
-小样本真实训练命令：
+正式训练命令（仅训练集 158 题 → 1896 对，防泄漏）：
 
 ```powershell
-python scripts/train_embedding.py --max-samples 16 --epochs 1 --batch-size 4 --warmup-steps 1
+python scripts/split_dataset.py --test-ratio 0.2 --seed 42
+python scripts/build_training_pairs.py --queries-file data/eval/train_queries.csv --target-count 2000
+python scripts/train_embedding.py --epochs 3 --batch-size 8 --warmup-steps 80
 ```
 
 训练结果：
 
 ```text
-train_runtime: 4.3681
-train_samples_per_second: 3.663
-train_steps_per_second: 0.916
-train_loss: 4.769443988800049
-epoch: 1.0
+train_runtime: 1919.4861
+train_samples_per_second: 2.963
+train_steps_per_second: 0.37
+train_loss: 4.4834886596508
+epoch: 3.0
+pair_count: 1896
 ```
+
+（早期做过 16 条小样本验证、以及一次 900 对但 train/test 同源的训练——后者评测结论因
+数据泄漏作废，现已被上述防泄漏流程取代。）
 
 输出目录：
 
@@ -140,13 +165,15 @@ FAISS 元数据：
 
 ## 风险与下一步
 
-当前训练只是 16 条样本的小规模验证，作用是证明链路能跑通，不代表模型效果已经明显提升。
+已完成：197 题数据集、80/20 防泄漏划分、1896 对训练、独立测试集三档评测。
+关键发现：**小规模微调在独立测试集上不及原始基座**（见"当前结论"）。
 
-下一步应该做：
+下一步（让微调可能真正生效的方向）：
 
 ```text
-1. 增加与当前 raw 数据匹配的 retrieval_queries/questions
-2. 用完整 200 条训练对训练 1-3 个 epoch
-3. 实现 evaluate_retrieval.py，比较 lite、base transformer、fine-tuned transformer 的 Recall@5
-4. 把训练耗时、Recall@5、响应时间整理进 docs/experiment_report.md
+1. 换损失：MultipleNegativesRankingLoss（in-batch negatives），比 TripletLoss 更适合检索
+2. 清洗负样本：剔除"同主题正确片段"被当作负例的情况（当前 hard negative 偏脏）
+3. 降低过拟合：减到 1 epoch、调小学习率、加大数据量到数千条
+4. 扩大评测：跨成员交叉验证 + 补充检索响应时延对比
+5. 把以上整理进 docs/experiment_report.md
 ```

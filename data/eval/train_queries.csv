@@ -1,0 +1,159 @@
+query,expected_file,expected_topic,query_type,answer_keywords,source
+卷积核、步幅和填充分别会影响 CNN 的什么？,CNN卷积神经网络_可靠资料整理.md,CNN,fact,卷积核;步幅;填充;输出尺寸;特征图,data/raw/public/deep_learning_core/questions.csv
+Cosine Annealing和Step Decay两种学习率调度策略各有什么特点？,模型训练_流程与常见问题_陈科宇.md,模型训练,compare,余弦;周期性;阶梯;固定间隔;平滑,data/raw/shiyan11-15/questions.csv
+自动微分和数值差分有什么区别？,神经网络与反向传播_可靠资料整理.md,反向传播,compare,自动微分;数值差分;链式法则;扰动参数;计算成本,data/raw/public/deep_learning_core/questions.csv
+深度学习模型调参的一般顺序和注意事项有哪些？,模型调参_超参数优化方法_陈科宇.md,模型调参,summary,学习率;网络结构;正则化;控制变量;验证集;记录,data/raw/shiyan11-15/questions.csv
+ReLU激活函数为什么能缓解梯度消失问题？,模型训练_流程与常见问题_陈科宇.md,模型训练,fact,导数为1;非饱和;正值;梯度传播,data/raw/shiyan11-15/questions.csv
+GRU中的重置门起什么作用？,cha6-循环神经网络.pdf,GRU,fact,忽略历史;候选状态;短期依赖,data/eval/retrieval_queries-ddw.csv
+为什么分类任务通常使用交叉熵损失而不是均方误差？,损失函数与优化器_对比与选择_徐嘉泽.md,损失函数,compare,分类任务;交叉熵;MSE;梯度消失;概率解释;收敛速度,data/raw/xujiaze/questions.csv
+请总结神经网络从输入到完成一次参数更新的完整训练流程,神经网络基础_入门笔记_徐嘉泽.md,神经网络基础,summary,前向传播;损失计算;反向传播;梯度下降;参数更新;迭代;激活函数,data/raw/xujiaze/questions.csv
+模型训练中梯度消失和梯度爆炸分别是什么原因导致的？,模型训练_流程与常见问题_陈科宇.md,模型训练,fact,链式法则;激活函数;权重初始化;梯度裁剪,data/raw/shiyan11-15/questions.csv
+对比交叉熵损失和均方误差损失在分类任务中的性能差异，为什么分类任务不用MSE？,损失函数与优化器_对比与选择_徐嘉泽.md,损失函数/分类任务设计,compare,梯度大小;梯度消失;概率解释;收敛速度;实验验证,data/raw/xujiaze/questions.csv
+池化层在 CNN 中有什么作用？,CNN卷积神经网络_可靠资料整理.md,CNN,fact,池化;下采样;鲁棒性;感受野;计算量,data/raw/public/deep_learning_core/questions.csv
+卷积神经网络有哪三个结构上的特性？,cha5-卷积神经网络.pdf,CNN/卷积神经网络的基本特性,fact,局部连接; 权重共享; 空间或时间上的次采样,data/raw/ddw的资料/questions.csv
+什么是自注意力机制？,Transformer注意力机制.md,Transformer,fact,Query;Key;Value;权重计算,data/eval/retrieval_queries-ddw.csv
+双向循环神经网络（Bidirectional RNN）相比单向RNN在处理序列数据时有什么优势？,cha6-循环神经网络.pdf,双向RNN的优势,compare,既往后看也向前看;利用未来信息;双向上下文信息,data/raw/ddw的资料/questions.csv
+计算图中反向传播的规则包括哪几个步骤？,反向传播与优化_原理详解_徐嘉泽.md,反向传播,summary,从输出开始;计算局部梯度;链式法则相乘;传递给输入;多条路径相加,data/raw/xujiaze/questions.csv
+早停Early Stopping策略的作用是什么？,模型训练_流程与常见问题_陈科宇.md,模型训练,fact,防止过拟合;验证集损失;停止训练;最优模型,data/raw/shiyan11-15/questions.csv
+学习率过大或过小分别会对训练产生什么影响？,模型调参_超参数优化方法_陈科宇.md,模型调参,fact,震荡;发散;收敛慢;局部最优;适中,data/raw/shiyan11-15/questions.csv
+LSTM如何解决RNN的长期依赖问题？,cha6-循环神经网络.pdf,LSTM,fact,记忆单元;门控;梯度保持,data/eval/retrieval_queries-ddw.csv
+梯度下降算法的三种变体（BGD、SGD、Mini-Batch GD）各有什么特点和优缺点？,损失函数与优化器_对比与选择_徐嘉泽.md,优化器/梯度下降变体,compare,批量梯度下降;随机梯度下降;小批量梯度下降;速度稳定性平衡,data/raw/xujiaze/questions.csv
+过拟合和欠拟合分别有什么表现？如何判断？,过拟合与正则化_方法详解_徐嘉泽.md,过拟合与正则化,compare,训练误差;测试误差;验证集损失;过拟合;欠拟合;差距,data/raw/xujiaze/questions.csv
+PPO算法中的裁剪机制如何改进了TRPO的复杂性问题？,策略梯度_刘书洋.pdf,PPO算法核心思想,fact,PPO-Clip; 裁剪; 简化版本; 复合损失; 目标函数,data/raw/liushuyang/questions.csv
+MSE和MAE作为回归指标，对异常值的敏感度有什么区别？,实验结果分析_评估指标与诊断_陈科宇.md,实验结果分析,compare,平方;放大;绝对值;鲁棒;异常值,data/raw/shiyan11-15/questions.csv
+在实验日志与数据管理中，应该如何记录和管理深度学习实验的版本和配置信息？,实验结果分析方法_刘书洋.pdf,实验日志管理与版本控制,fact,超参数配置;模型架构;Git版本控制;Weights & Biases;TensorBoard;数据集分割方式,data/raw/liushuyang/questions.csv
+学习率调度有哪些常用策略？为什么需要在训练过程中动态调整学习率？,损失函数与优化器_对比与选择_徐嘉泽.md,优化器/学习率调度,summary,Step Decay;Cosine Annealing;Warm-up;ReduceLROnPlateau;跳出局部最优,data/raw/xujiaze/questions.csv
+Dropout率一般设置在什么范围，它的作用是什么？,模型调参_超参数优化方法_陈科宇.md,模型调参,fact,0.1;0.5;随机失活;正则化;防止过拟合,data/raw/shiyan11-15/questions.csv
+循环神经网络总体而言有哪些主要缺点？,cha6-循环神经网络.pdf,循环神经网络的局限性,summary,长程依赖问题;记忆容量有限;并行计算能力弱,data/raw/ddw的资料/questions.csv
+为什么前馈网络无法直接解决老虎机问题（Slot Filling任务）中需要记忆信息的问题？,cha6-循环神经网络.pdf,前馈网络的局限性,fact,前馈网络输出只依赖当前输入;无法保存历史信息;缺乏记忆机制,data/raw/ddw的资料/questions.csv
+过拟合和欠拟合分别在训练损失和验证损失曲线上有什么表现？,过拟合与正则化_方法详解_徐嘉泽.md,过拟合与欠拟合的识别判断,compare,训练损失持续下降; 验证损失先降后升; 两者差距越来越大; 训练损失和验证损失都很高; 下降缓慢或停滞,data/raw/xujiaze/questions.csv
+熵、交叉熵和KL散度三者之间有什么关系？,反向传播与优化_原理详解_徐嘉泽.md,损失函数,compare,熵;交叉熵;KL散度;信息损失;最优编码;概率分布,data/raw/xujiaze/questions.csv
+学习率Warmup策略在训练初期有什么作用？,模型训练_流程与常见问题_陈科宇.md,模型训练,fact,逐渐增大;稳定;预热;避免震荡,data/raw/shiyan11-15/questions.csv
+普通 RNN 为什么难以学习长距离依赖？,RNN_LSTM与序列建模_可靠资料整理.md,RNN,fact,长距离依赖;梯度消失;梯度爆炸;时间展开,data/raw/public/deep_learning_core/questions.csv
+感知器无法解决XOR问题的原因是什么？,深度学习入门_神经网络结构_徐嘉泽.md,感知器的局限性,fact,单层感知器; 线性可分问题; 无法处理非线性关系; Minsky 1969年发现,data/raw/xujiaze/questions.csv
+梯度裁剪Gradient Clipping是如何解决梯度爆炸问题的？,模型训练_流程与常见问题_陈科宇.md,模型训练,fact,阈值;范数限制;缩放;防止过大,data/raw/shiyan11-15/questions.csv
+反向传播为什么可以高效计算深层网络中每个参数的梯度？,神经网络与反向传播_可靠资料整理.md,反向传播,fact,链式法则;计算图;局部导数;误差信号;梯度,data/raw/public/deep_learning_core/questions.csv
+WGAN相比原始GAN在损失函数上做了什么改进？,GAN_生成对抗网络_陈科宇.md,GAN,fact,Wasserstein距离;JS散度;训练稳定;Lipschitz,data/raw/shiyan11-15/questions.csv
+FAISS 在 CourseMind 检索链路中负责什么？,Embedding语义检索与微调_可靠资料整理.md,FAISS,fact,FAISS;向量索引;近邻搜索;Top-K;chunk,data/raw/public/deep_learning_core/questions.csv
+过拟合通常有哪些表现？,正则化泛化与归一化_可靠资料整理.md,正则化,fact,训练损失;验证损失;训练准确率;验证准确率;泛化,data/raw/public/deep_learning_core/questions.csv
+偏差与方差分解中，期望错误由哪几部分组成？,过拟合与正则化_方法详解_徐嘉泽.md,过拟合与正则化,fact,偏差;方差;噪声;期望错误;欠拟合;过拟合,data/raw/xujiaze/questions.csv
+神经元模型的数学公式是什么？各符号代表什么含义？,神经网络基础_入门笔记_徐嘉泽.md,神经网络基础,fact,加权求和;激活函数;偏置;权重;输入信号;输出,data/raw/xujiaze/questions.csv
+连接主义的三个核心观点分别是什么？,深度学习入门_神经网络结构_徐嘉泽.md,连接主义原理,summary,分布式编码权重; 调整连接强度学习; 并行分布式处理,data/raw/xujiaze/questions.csv
+批量梯度下降BGD和随机梯度下降SGD在更新方式上有什么区别？,模型训练_流程与常见问题_陈科宇.md,模型训练,compare,全部数据;单个样本;稳定;波动;内存,data/raw/shiyan11-15/questions.csv
+Weight Decay权重衰减和L2正则化是什么关系？,模型调参_超参数优化方法_陈科宇.md,模型调参,fact,等价;惩罚项;权重大小;防止过拟合,data/raw/shiyan11-15/questions.csv
+多层前馈神经网络与感知器相比，解决了什么关键问题？,深度学习入门_神经网络结构_徐嘉泽.md,前馈神经网络结构,compare,处理非线性关系; 多层分层排列; 输入层隐藏层输出层; 信号单向传播,data/raw/xujiaze/questions.csv
+策略梯度定理的核心内容是什么，它解决了什么问题？,策略梯度_刘书洋.pdf,策略梯度定理,fact,策略梯度定理; 期望累积回报; 最大化; Sutton et al.,data/raw/liushuyang/questions.csv
+机器翻译中异步的序列到序列模式中，为什么需要两个不同的RNN？,cha6-循环神经网络.pdf,序列到序列模型,fact,一个RNN编码源语言;一个RNN解码生成目标语言;编码器-解码器架构,data/raw/ddw的资料/questions.csv
+反向传播算法的核心数学原理是什么？,反向传播与优化_原理详解_徐嘉泽.md,反向传播,fact,链式法则;复合函数求导;逐层传递;局部梯度;上游梯度,data/raw/xujiaze/questions.csv
+准确率Accuracy和F1分数在什么场景下会有明显差异，应该优先看哪个？,实验结果分析_评估指标与诊断_陈科宇.md,实验结果分析,compare,类别不平衡;精确率;召回率;调和平均;综合评价,data/raw/shiyan11-15/questions.csv
+对比ReLU、Sigmoid和Tanh三种激活函数在梯度消失问题上的差异。,深度学习入门_神经网络结构_徐嘉泽.md,常见激活函数对比,compare,ReLU正半轴导数恒为1; Sigmoid Tanh梯度消失; ReLU神经元死亡问题; 缓解梯度消失,data/raw/xujiaze/questions.csv
+CNN 和 Vision Transformer 在建模关系上有什么不同？,CNN卷积神经网络_可靠资料整理.md,CNN,compare,CNN;局部模式;自注意力;全局关系;Vision Transformer,data/raw/public/deep_learning_core/questions.csv
+请总结 CourseMind 的深度学习检索实验应该如何设计。,训练评估与实验方法_可靠资料整理.md,训练评估,summary,数据集;训练集;验证集;Recall@5;MRR;消融实验,data/raw/public/deep_learning_core/questions.csv
+RNN的隐藏状态是如何更新的？,cha6-循环神经网络.pdf,RNN,fact,当前输入;上一时刻状态;tanh激活,data/eval/retrieval_queries-ddw.csv
+KL散度和交叉熵之间的关系是什么？,反向传播与优化_原理详解_徐嘉泽.md,损失函数,fact,KL散度等于交叉熵减熵;最小化交叉熵等价最小化KL散度;真实分布熵固定;信息论,data/raw/xujiaze/questions.csv
+Transformer 为什么需要位置编码？,Attention与Transformer_可靠资料整理.md,Transformer,fact,位置编码;顺序信息;自注意力;token;序列,data/raw/public/deep_learning_core/questions.csv
+Actor-Critic算法中，Actor和Critic分别负责什么功能？,Actor-Critic_刘书洋.pdf,Actor-Critic算法基本概念,fact,Actor生成动作;Critic评估表现;策略函数;价值函数;指导动作,data/raw/liushuyang/questions.csv
+什么是池化层？它有哪些类型？,cha5-卷积神经网络.pdf,CNN,fact,降维;最大池化;平均池化,data/eval/retrieval_queries-ddw.csv
+为什么不能用测试集来调整超参数？三个数据集分别起什么作用？,模型正则化与泛化_实践指南_徐嘉泽.md,数据集划分与用途,fact,测试集保持陌生;模型间接偷看答案;训练集学习数据;验证集调参和监控;测试集最终评估,data/raw/xujiaze/questions.csv
+为什么 Adam 在训练初期通常收敛较快？,优化器与训练稳定性_可靠资料整理.md,优化器,fact,Adam;一阶矩;二阶矩;自适应;收敛,data/raw/public/deep_learning_core/questions.csv
+Transformer与RNN的主要区别是什么？,Transformer注意力机制.md,Transformer,compare,并行计算;注意力机制;长距离依赖,data/eval/retrieval_queries-ddw.csv
+在图像处理中应用卷积时，为什么需要二维卷积而不是一维卷积？,cha5-卷积神经网络.pdf,二维卷积在图像处理中的应用,fact,图像是二维矩阵; 输入形式; 神经网络处理,data/raw/ddw的资料/questions.csv
+在Actor-Critic算法中，Critic网络需要进行哪些参数更新？,Actor-Critic_刘书洋.pdf,Critic网络参数更新,fact,均方误差损失函数;梯度更新;TD误差;网络参数w;反馈和新状态,data/raw/liushuyang/questions.csv
+CNN中的卷积核有什么作用？,cha5-卷积神经网络.pdf,CNN,fact,特征提取;局部连接;权重共享,data/eval/retrieval_queries-ddw.csv
+GAN训练不稳定的主要原因有哪些，常见的解决方法是什么？,GAN_生成对抗网络_陈科宇.md,GAN,summary,模式坍塌;梯度消失;训练不平衡;WGAN;梯度惩罚;架构改进,data/raw/shiyan11-15/questions.csv
+WGAN的权重裁剪和WGAN-GP的梯度惩罚各有什么优缺点？,GAN_生成对抗网络_陈科宇.md,GAN,compare,权重裁剪;梯度惩罚;容量限制;训练稳定,data/raw/shiyan11-15/questions.csv
+SGD和Adam优化器的主要区别是什么？,损失函数与优化器_对比与选择_徐嘉泽.md,优化器,compare,SGD;Adam;自适应学习率;动量;一阶矩;二阶矩;收敛速度,data/raw/xujiaze/questions.csv
+ROC曲线的横轴和纵轴分别代表什么？,实验结果分析_评估指标与诊断_陈科宇.md,实验结果分析,fact,假正例率;真正例率;FPR;TPR;阈值,data/raw/shiyan11-15/questions.csv
+Transformer为什么需要位置编码？,Transformer注意力机制.md,Transformer,fact,序列顺序;正弦余弦;无RNN结构,data/eval/retrieval_queries-ddw.csv
+自动微分的前向模式和反向模式有什么区别？,反向传播与优化_原理详解_徐嘉泽.md,反向传播,compare,前向模式;反向模式;输入维度;输出维度;神经网络;梯度计算,data/raw/xujiaze/questions.csv
+步长和填充对CNN输出尺寸有什么影响？,cha5-卷积神经网络.pdf,CNN,fact,输出缩小;边界信息;计算公式,data/eval/retrieval_queries-ddw.csv
+计算图在反向传播中起什么作用？,反向传播与优化_原理详解_徐嘉泽.md,反向传播,fact,计算图;自动微分;链式法则;节点;反向模式;复合函数,data/raw/xujiaze/questions.csv
+如何通过损失曲线判断模型是过拟合、欠拟合还是拟合良好？,实验结果分析_评估指标与诊断_陈科宇.md,实验结果分析,summary,训练损失;验证损失;差距;上升;下降;接近,data/raw/shiyan11-15/questions.csv
+梯度消失和梯度爆炸分别是什么现象？,神经网络与反向传播_可靠资料整理.md,反向传播,compare,梯度消失;梯度爆炸;局部导数;深层网络;RNN,data/raw/public/deep_learning_core/questions.csv
+L2正则化为什么被称为权值衰减？,模型正则化与泛化_实践指南_徐嘉泽.md,过拟合与正则化,fact,权值衰减;惩罚项;权重变小;模型复杂度;正则化系数;参数更新,data/raw/xujiaze/questions.csv
+Early Stopping为什么能防止过拟合？,模型正则化与泛化_实践指南_徐嘉泽.md,过拟合与正则化,fact,验证集损失;临界点;学规律;记噪声;训练轮数;Patience,data/raw/xujiaze/questions.csv
+梯度下降中三种策略（批量、随机、小批量）的优缺点对比是什么？,反向传播与优化_原理详解_徐嘉泽.md,梯度下降,compare,批量梯度稳定但慢;随机梯度快但噪声大;小批量折中方案;标准做法;内存消耗,data/raw/xujiaze/questions.csv
+Dropout 的工作原理是什么，它如何产生隐式集成效果？,过拟合与正则化_方法详解_徐嘉泽.md,Dropout 正则化方法,fact,随机丢弃神经元; 每次训练使用不同网络子结构; 隐式集成; 测试时取平均; 增加鲁棒性,data/raw/xujiaze/questions.csv
+RNN、LSTM 和 Transformer 处理序列的方式有什么区别？,RNN_LSTM与序列建模_可靠资料整理.md,序列建模,compare,RNN;LSTM;Transformer;递归;门控;自注意力,data/raw/public/deep_learning_core/questions.csv
+REINFORCE算法使用什么方法来估计回报G_t？,策略梯度_刘书洋.pdf,策略梯度,fact,"""蒙特卡洛;G_t;无偏;方差大""",data/raw/liushuyang/questions.csv
+什么是消融实验？CourseMind 可以做哪些消融？,训练评估与实验方法_可靠资料整理.md,训练评估,fact,消融实验;BM25;GraphRAG;MiniRanker;fine-tuned embedding,data/raw/public/deep_learning_core/questions.csv
+Embedding 微调中的 query、positive 和 negative 分别是什么？,Embedding语义检索与微调_可靠资料整理.md,Embedding,fact,query;positive;negative;拉近;拉远;训练目标,data/raw/public/deep_learning_core/questions.csv
+零填充（Zero Padding）在卷积操作中的作用是什么？,cha5-卷积神经网络.pdf,零填充的应用,fact,保持输出尺寸; 边界处理; 等宽卷积; 信息保留,data/raw/ddw的资料/questions.csv
+为什么不能只看训练集命中率判断微调效果？,训练评估与实验方法_可靠资料整理.md,训练评估,fact,训练集;验证集;测试集;过拟合;泛化,data/raw/public/deep_learning_core/questions.csv
+提前停止（Early Stopping）是如何防止过拟合的？实现方式是什么？,模型正则化与泛化_实践指南_徐嘉泽.md,提前停止正则化方法,fact,监控验证集误差;在转折点之前刹车;保留泛化能力最好的状态;设置Patience参数;回退到验证误差最低的参数,data/raw/xujiaze/questions.csv
+K折交叉验证的主要作用是什么？,实验结果分析_评估指标与诊断_陈科宇.md,实验结果分析,fact,减少随机性;可靠;划分;轮流验证;平均,data/raw/shiyan11-15/questions.csv
+标准自编码器和VAE在隐空间表示上有什么本质区别？,自编码器_基本结构与变分自编码器_陈科宇.md,自编码器,compare,离散;连续分布;概率;生成能力,data/raw/shiyan11-15/questions.csv
+REINFORCE算法为什么会出现高方差问题，这导致了什么样的训练困难？,策略梯度_刘书洋.pdf,REINFORCE算法的高方差问题,fact,蒙特卡洛采样; 高方差; 训练不稳定; 收敛缓慢; 需要大量样本,data/raw/liushuyang/questions.csv
+变分自编码器VAE与普通自编码器的主要区别是什么？,自编码器_基本结构与变分自编码器_陈科宇.md,自编码器,fact,概率分布;隐变量;KL散度;采样,data/raw/shiyan11-15/questions.csv
+RMSProp优化器是如何改进AdaGrad的？它解决了AdaGrad的什么问题？,损失函数与优化器_对比与选择_徐嘉泽.md,优化器/自适应方法,fact,指数移动平均;学习率过度衰减;避免衰减问题;非凸优化,data/raw/xujiaze/questions.csv
+为什么没有非线性激活函数时，多层网络仍然等价于线性变换？,神经网络与反向传播_可靠资料整理.md,神经网络基础,fact,线性变换;非线性;表达能力;激活函数,data/raw/public/deep_learning_core/questions.csv
+什么是GAN训练中的模式坍塌问题？,GAN_生成对抗网络_陈科宇.md,GAN,fact,多样性不足;少数类别;生成器;收敛,data/raw/shiyan11-15/questions.csv
+学习率对深度学习模型训练有什么影响，应该如何调整学习率？,实验结果分析方法_刘书洋.pdf,学习率优化与梯度下降,summary,梯度下降步长;训练稳定性;学习率衰减;余弦退火;learning rate finder方法,data/raw/liushuyang/questions.csv
+GAN的目标函数为什么被称为极小极大博弈？,GAN_生成对抗网络_陈科宇.md,GAN,fact,minimax;对抗;零和;优化,data/raw/shiyan11-15/questions.csv
+实验结果分析中混淆矩阵的四个基本元素是什么？,实验结果分析_评估指标与诊断_陈科宇.md,实验结果分析,fact,真正例;假正例;真反例;假反例;TP;FP;TN;FN,data/raw/shiyan11-15/questions.csv
+模型的期望误差包括哪三个部分？每个部分代表什么含义？,模型正则化与泛化_实践指南_徐嘉泽.md,误差分解与偏差方差权衡,fact,偏差Bias;方差Variance;噪声Noise;偏差反映欠拟合;方差反映过拟合,data/raw/xujiaze/questions.csv
+为什么需要将数据划分为训练集、验证集和测试集三个部分？,过拟合与正则化_方法详解_徐嘉泽.md,数据集划分的必要性,fact,避免模型间接见过测试集; 测试集保持完全未知; 调参时反复使用测试集导致偏向乐观; 验证集用于调参和模型选择; 确保评估客观性,data/raw/xujiaze/questions.csv
+Actor-Critic和REINFORCE算法在学习方式上有什么不同？,Actor-Critic_刘书洋.pdf,Actor-Critic,compare,"""TD学习;蒙特卡洛;方差小;偏差;Critic""",data/raw/liushuyang/questions.csv
+数据增强相比简单增加训练数据量有什么额外的好处？,过拟合与正则化_方法详解_徐嘉泽.md,数据增强防止过拟合,compare,增加数据多样性; 模型学习变换不变的特征; 隐式正则化约束; 不记忆特定样本; 只在训练时使用,data/raw/xujiaze/questions.csv
+为什么分类任务中使用交叉熵损失而不是MSE?,反向传播与优化_原理详解_徐嘉泽.md,损失函数,fact,交叉熵梯度更大;log函数性质;激活函数饱和区;梯度消失;收敛速度,data/raw/xujiaze/questions.csv
+Embedding 在语义检索中起什么作用？,Embedding语义检索与微调_可靠资料整理.md,Embedding,fact,Embedding;向量空间;语义相似;问题;chunk,data/raw/public/deep_learning_core/questions.csv
+Early Stopping 为什么可以看作一种正则化？,正则化泛化与归一化_可靠资料整理.md,正则化,fact,Early Stopping;验证集;训练轮数;噪声;过拟合,data/raw/public/deep_learning_core/questions.csv
+深层网络训练中梯度消失和梯度爆炸的原因及缓解方法是什么？,反向传播与优化_原理详解_徐嘉泽.md,深层网络训练难点,fact,链式法则连乘;梯度指数衰减增长;ReLU激活函数;批归一化;残差连接;权重初始化,data/raw/xujiaze/questions.csv
+在图像描述生成（Image Caption Generation）任务中，CNN和RNN各自的角色是什么？,cha6-循环神经网络.pdf,CNN和RNN的组合应用,fact,CNN提取图像特征;RNN生成文字序列;CNN输出图像向量,data/raw/ddw的资料/questions.csv
+学习率过大或过小时会带来什么训练问题？,优化器与训练稳定性_可靠资料整理.md,优化器,fact,学习率;震荡;发散;收敛慢;步长,data/raw/public/deep_learning_core/questions.csv
+GAN中生成器和判别器的训练目标分别是什么？,GAN_生成对抗网络_陈科宇.md,GAN,fact,生成样本;判别真假;最小最大博弈;纳什均衡,data/raw/shiyan11-15/questions.csv
+为什么中文知识检索需要中文或多语种 embedding 模型？,Embedding语义检索与微调_可靠资料整理.md,Embedding,fact,中文;分词;预训练模型;语义检索;BGE,data/raw/public/deep_learning_core/questions.csv
+请总结过拟合的常见原因以及对应的正则化解决方法,过拟合与正则化_方法详解_徐嘉泽.md,过拟合与正则化,summary,过拟合;数据不足;噪声;模型复杂;L2正则化;Dropout;Early Stopping;数据增强,data/raw/xujiaze/questions.csv
+策略梯度定理中梯度∇θ J(θ)的表达式是什么？,策略梯度_刘书洋.pdf,策略梯度,fact,"""∇θ J(θ);E_π[∇θ log π_θ(a|s) * Q_π(s,a)];策略梯度定理""",data/raw/liushuyang/questions.csv
+DCGAN在架构设计上提出了哪些关键改进？,GAN_生成对抗网络_陈科宇.md,GAN,fact,卷积层;批归一化;全连接层;稳定训练,data/raw/shiyan11-15/questions.csv
+在Actor-Critic算法流程中，如何计算TD误差，以及它用于哪个网络的更新？,Actor-Critic_刘书洋.pdf,TD误差计算,fact,δ=R+γV(S′)−V(S);Critic网络参数更新;反馈R;衰减因子γ;状态价值V,data/raw/liushuyang/questions.csv
+为什么说神经网络天然是深度学习？,深度学习入门_神经网络结构_徐嘉泽.md,神经网络基础,fact,神经网络;深度学习;贡献度分配;偏导数;连接主义;多层网络,data/raw/xujiaze/questions.csv
+精确率Precision和召回率Recall的定义分别是什么？,实验结果分析_评估指标与诊断_陈科宇.md,实验结果分析,fact,TP/(TP+FP);TP/(TP+FN);预测为正;实际为正,data/raw/shiyan11-15/questions.csv
+什么是长程依赖问题，它产生的根本原因是什么？,cha6-循环神经网络.pdf,RNN的长程依赖问题,fact,梯度消失或爆炸;只能学习短周期依赖;随时间反向传播过程中梯度衰减,data/raw/ddw的资料/questions.csv
+GRU 和 LSTM 的主要区别是什么？,RNN_LSTM与序列建模_可靠资料整理.md,GRU,compare,GRU;LSTM;更新门;重置门;参数更少,data/raw/public/deep_learning_core/questions.csv
+稀疏自编码器通过什么方式学习更有判别性的特征？,自编码器_基本结构与变分自编码器_陈科宇.md,自编码器,fact,稀疏性约束;激活比例;正则化,data/raw/shiyan11-15/questions.csv
+自编码器有哪些主要变体，各自适用于什么场景？,自编码器_基本结构与变分自编码器_陈科宇.md,自编码器,summary,标准;去噪;稀疏;变分;降维;生成;去噪,data/raw/shiyan11-15/questions.csv
+A2C和A3C的主要区别是什么？,Actor-Critic_刘书洋.pdf,Actor-Critic,fact,"""同步;异步;多个环境;并行""",data/raw/liushuyang/questions.csv
+CGAN和普通GAN在输入方式上有什么区别？,GAN_生成对抗网络_陈科宇.md,GAN,compare,条件;类别标签;控制生成;无监督;有监督,data/raw/shiyan11-15/questions.csv
+在实际项目中如何选择和组合多种正则化方法？,过拟合与正则化_方法详解_徐嘉泽.md,正则化方法的综合应用策略,summary,基础组合推荐; L2 正则化加 Dropout; 图像任务组合策略; 正则化强度需要实验调参; 在验证集上监控效果,data/raw/xujiaze/questions.csv
+RNN在训练时为什么会出现梯度消失？,cha6-循环神经网络.pdf,RNN,fact,时间步长;连乘;梯度衰减,data/eval/retrieval_queries-ddw.csv
+去噪自编码器DAE的训练方式有什么特殊之处？,自编码器_基本结构与变分自编码器_陈科宇.md,自编码器,fact,噪声;恢复;鲁棒性;泛化,data/raw/shiyan11-15/questions.csv
+Early Stopping 如何自动确定最优的训练轮数？,过拟合与正则化_方法详解_徐嘉泽.md,Early Stopping 早停方法,fact,监控验证集损失; 验证损失不再下降时停止; Patience 参数设置; 保留最佳模型; 避免学规律到记噪声的转向,data/raw/xujiaze/questions.csv
+在深度学习实验中，如何通过控制变量法来有效地进行超参数实验？,实验结果分析方法_刘书洋.pdf,控制变量法与实验设计,fact,一次只修改一个参数;基准模型;网格搜索或随机搜索;对比分析,data/raw/liushuyang/questions.csv
+什么是结构风险最小化（SRM）？它与经验风险的关系是什么？,模型正则化与泛化_实践指南_徐嘉泽.md,经验风险与结构风险,fact,结构风险等于经验风险加模型复杂度惩罚;经验风险最小化容易过拟合;SRM平衡拟合和泛化;好的训练优化经验风险同时控制复杂度,data/raw/xujiaze/questions.csv
+VAE的重参数化技巧解决了什么问题？,自编码器_基本结构与变分自编码器_陈科宇.md,自编码器,fact,采样;可导;反向传播;随机性,data/raw/shiyan11-15/questions.csv
+CNN中的感受野是什么意思？,cha5-卷积神经网络.pdf,CNN,fact,输入区域;卷积核大小;层数加深,data/eval/retrieval_queries-ddw.csv
+什么是过拟合现象，如何通过观察训练曲线来诊断模型是否出现过拟合？,实验结果分析方法_刘书洋.pdf,模型诊断与过拟合识别,fact,训练损失持续下降;验证损失上升;验证集性能下降;减少网络复杂度;增加正则化,data/raw/liushuyang/questions.csv
+卷积操作中的两个主要步骤是什么？,cha5-卷积神经网络.pdf,卷积操作的基本步骤,fact,翻转; 滑动; 对齐,data/raw/ddw的资料/questions.csv
+多头注意力相比单头注意力有什么优势？,Attention与Transformer_可靠资料整理.md,Transformer,fact,多头注意力;表示子空间;位置关系;语义;表达能力,data/raw/public/deep_learning_core/questions.csv
+前向传播、反向传播和梯度下降在神经网络训练中的分工是什么？,反向传播与优化_原理详解_徐嘉泽.md,训练流程,summary,前向传播计算预测;反向传播计算梯度;梯度下降更新参数;分工合作;循环过程,data/raw/xujiaze/questions.csv
+小批量和大批量训练在梯度估计和收敛特性上有什么区别？,模型调参_超参数优化方法_陈科宇.md,模型调参,compare,噪声;跳出局部最优;估计准确;内存;学习率,data/raw/shiyan11-15/questions.csv
+Dropout 为什么能降低过拟合风险？,正则化泛化与归一化_可靠资料整理.md,Dropout,fact,随机丢弃;共适应;隐式集成;鲁棒性;过拟合,data/raw/public/deep_learning_core/questions.csv
+在深度学习模型训练中，如何判断模型是否出现了过拟合，应该采取哪些应对措施？,模型训练_流程与常见问题_陈科宇.md,模型训练,summary,训练集;验证集;损失差距;正则化;Dropout;数据增强;早停,data/raw/shiyan11-15/questions.csv
+什么是循环神经网络？,cha6-循环神经网络.pdf,RNN,fact,序列;隐藏状态;时间步,data/eval/retrieval_queries-ddw.csv
+人脑神经系统的哪个基本特征启发了人工神经网络的设计？,深度学习入门_神经网络结构_徐嘉泽.md,生物神经系统与人工神经网络的关系,fact,接收-累积-触发机制; 860亿神经元; 突触连接; 简单计算单元涌现复杂能力,data/raw/xujiaze/questions.csv
+SGD、Momentum 和 Adam 的核心区别是什么？,优化器与训练稳定性_可靠资料整理.md,优化器,compare,SGD;动量;Adam;一阶矩;二阶矩;自适应学习率,data/raw/public/deep_learning_core/questions.csv
+均方误差和平均绝对误差在处理异常值时有什么区别？,反向传播与优化_原理详解_徐嘉泽.md,损失函数,compare,MSE处理异常值放大;MAE更鲁棒;MSE处处可导;MAE不可导点;平方与绝对值,data/raw/xujiaze/questions.csv
+多头注意力的优势是什么？,Transformer注意力机制.md,Transformer,fact,多角度;不同子空间;并行计算,data/eval/retrieval_queries-ddw.csv
+动量（Momentum）方法的核心思想是什么？它如何加速模型训练？,损失函数与优化器_对比与选择_徐嘉泽.md,优化器/动量,fact,惯性效应;累积历史梯度;加速前进;减少震荡;跳出局部最优,data/raw/xujiaze/questions.csv
+反向传播算法中，误差项是如何从输出层传递到隐藏层的？,反向传播与优化_原理详解_徐嘉泽.md,反向传播,fact,误差项;链式法则;输出层;隐藏层;权重矩阵;激活函数导数,data/raw/xujiaze/questions.csv
+CNN 为什么比全连接网络更适合图像任务？,CNN卷积神经网络_可靠资料整理.md,CNN,fact,局部连接;权值共享;参数更少;空间结构;图像,data/raw/public/deep_learning_core/questions.csv
+L1 正则化和 L2 正则化有什么区别？,正则化泛化与归一化_可靠资料整理.md,正则化,compare,L1;L2;稀疏;权重衰减;模型复杂度,data/raw/public/deep_learning_core/questions.csv
+Actor-Critic中的Actor和Critic分别承担什么角色？,Actor-Critic_刘书洋.pdf,Actor-Critic,fact,"""Actor;策略;动作选择;Critic;价值评估;优势函数""",data/raw/liushuyang/questions.csv
+汇聚层（Max Pooling）在CNN中的作用是什么？,cha5-卷积神经网络.pdf,汇聚层的功能,fact,减少神经元个数; 下采样; 参数减少; 图像变小,data/raw/ddw的资料/questions.csv
+一个典型的卷积网络由哪些层构成？卷积块如何定义？,cha5-卷积神经网络.pdf,卷积网络的结构组成,summary,卷积层; 汇聚层; 全连接层; 卷积块; 堆叠结构,data/raw/ddw的资料/questions.csv
+网格搜索Grid Search的基本原理是什么？,模型调参_超参数优化方法_陈科宇.md,模型调参,fact,穷举;候选值;组合;全面;计算量,data/raw/shiyan11-15/questions.csv
+均方误差（MSE）损失函数的定义是什么？它在什么场景下适用，有什么缺点？,损失函数与优化器_对比与选择_徐嘉泽.md,损失函数/均方误差,fact,预测值与真实值差值平方和平均;回归任务;对异常值敏感,data/raw/xujiaze/questions.csv
+策略梯度方法相比DQN有什么优点？,策略梯度_刘书洋.pdf,策略梯度,fact,"""连续动作空间;随机策略;直接优化目标""",data/raw/liushuyang/questions.csv
+岭回归与普通最小二乘回归有什么区别？,模型正则化与泛化_实践指南_徐嘉泽.md,过拟合与正则化,compare,岭回归;最小二乘;L2正则化;权重衰减;结构风险;经验风险,data/raw/xujiaze/questions.csv
+L2 正则化如何通过权值衰减来防止过拟合？,过拟合与正则化_方法详解_徐嘉泽.md,L2 正则化与权值衰减,fact,权值衰减; 权重平方和; 梯度更新公式; 权重趋向小值; 模型复杂度降低,data/raw/xujiaze/questions.csv
+请总结深度学习模型训练中防止过拟合的常见方法,模型参数_刘书洋.pdf,模型参数,summary,"""Dropout;早停;数据增强;正则化;L1;L2""",data/raw/liushuyang/questions.csv
+LSTM引入了哪几个门控机制？,cha6-循环神经网络.pdf,LSTM,fact,遗忘门;输入门;输出门,data/eval/retrieval_queries-ddw.csv
+在方差降低技术中，基线函数和优势函数各自的作用和区别是什么？,策略梯度_刘书洋.pdf,方差降低技术,compare,基线; 状态值函数; 优势函数; 相对平均水平; 梯度期望,data/raw/liushuyang/questions.csv
+Batch Normalization 的主要作用是什么？,正则化泛化与归一化_可靠资料整理.md,BatchNorm,fact,Batch Normalization;激活分布;学习率;训练稳定;正则化,data/raw/public/deep_learning_core/questions.csv
+CNN 的低层、中层和高层特征通常有什么差异？,CNN卷积神经网络_可靠资料整理.md,CNN,fact,边缘;纹理;局部形状;语义;层次化,data/raw/public/deep_learning_core/questions.csv
+缩放点积注意力为什么要除以 sqrt(d_k)？,Attention与Transformer_可靠资料整理.md,Attention,fact,缩放;点积;softmax;梯度;稳定,data/raw/public/deep_learning_core/questions.csv
+LSTM的遗忘门有什么作用？,cha6-循环神经网络.pdf,LSTM,fact,丢弃信息;记忆清理;防止过载,data/eval/retrieval_queries-ddw.csv
+卷积层中滤波器的作用是什么，多个卷积核如何产生特征映射？,cha5-卷积神经网络.pdf,卷积核和特征映射,fact,特征提取器; 特征映射; 多个卷积核; 参数学习,data/raw/ddw的资料/questions.csv
+Actor-Critic算法如何改进传统的蒙特卡罗策略梯度算法？,Actor-Critic_刘书洋.pdf,Actor-Critic与策略梯度的关系,compare,用价值函数替代蒙特卡罗法;使用Q网络作为Critic;通用性更强;场景不受限,data/raw/liushuyang/questions.csv
+Dropout防止过拟合的两个解释角度分别是什么？,模型正则化与泛化_实践指南_徐嘉泽.md,Dropout正则化机制,fact,防止神经元共适应;每个神经元学会独立工作;隐式集成;多个子网络预测平均,data/raw/xujiaze/questions.csv
