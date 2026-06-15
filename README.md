@@ -39,7 +39,6 @@ http://127.0.0.1:8501/
 data/raw/xujiaze/
 data/raw/liushuyang/
 data/raw/shiyan11-15/
-data/raw/public/deep_learning_core/
 ```
 
 每个数据目录建议包含：
@@ -179,10 +178,11 @@ python -m pytest
 
 测试覆盖文档解析、中文切分、FAISS 持久化、检索、GraphRAG-lite、MiniRanker、LLM mock、概念练习题生成和 Bandit 复习推荐。
 
-## 贡献入口
-
-请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。新增资料优先放入 `data/raw/<成员或主题>/`，并补充 `metadata.csv` 和 `questions.csv`；代码改动需要保证 `mock` 模式和测试仍然可运行。
 
 ## 技术文档
 
-完整架构、数据流、算法设计、训练流程和汇报讲解建议见 [docs/technical_design.md](docs/technical_design.md)。
+- 系统架构与数据流：[docs/architecture.md](docs/architecture.md)
+- 中文检索设计：[docs/chinese_retrieval.md](docs/chinese_retrieval.md)
+- GraphRAG-lite 设计：[docs/graphrag_design.md](docs/graphrag_design.md)
+- Embedding 微调实验报告：[docs/embedding_finetuning_report.md](docs/embedding_finetuning_report.md)
+

@@ -1,4 +1,0 @@
-file_name,title,source,type,topic,can_commit,notes
-CNN_卷积神经网络_姓名.md,CNN 卷积神经网络笔记,个人整理,markdown,CNN,yes,可提交
-Transformer_注意力机制_姓名.txt,Transformer 注意力机制笔记,个人整理,txt,Transformer,yes,可提交
-LSTM_长短期记忆网络_姓名.pdf,LSTM 长短期记忆网络讲义,课程讲义,pdf,LSTM,no,只本地使用
