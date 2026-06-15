@@ -1,6 +1,0 @@
-# 强制 shell 脚本始终用 LF 行尾，避免 Windows 上 clone 后 CRLF 导致
-# Linux 服务器执行报错（bad interpreter: /usr/bin/env bash^M）。
-*.sh text eol=lf
-
-# 其余文本由 git 自动处理行尾
-* text=auto
